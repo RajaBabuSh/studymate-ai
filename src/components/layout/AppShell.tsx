@@ -15,7 +15,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const isAdminRoute = pathname?.startsWith("/admin");
   const isPublicRoute =
-    pathname === "/" || pathname === "/login" || pathname === "/register" || Boolean(isAdminRoute);
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    Boolean(isAdminRoute);
   const isOnboardingRoute = pathname === "/onboarding";
 
   useEffect(() => {

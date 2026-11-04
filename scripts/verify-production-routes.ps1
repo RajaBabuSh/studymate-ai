@@ -1,16 +1,20 @@
 $routes = @(
-    '/roadmap',
-    '/admin/curriculum-audit',
-    '/api/admin/audit-curriculum',
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
     '/dashboard',
-    '/exam-planner',
     '/subjects',
-    '/tests',
-    '/timetable'
+    '/timetable',
+    '/tasks',
+    '/progress',
+    '/notes',
+    '/support',
+    '/settings'
 )
 
 Write-Host "================================================="
-Write-Host "VERIFYING STUDYMATE AI PRODUCTION SERVER ROUTES"
+Write-Host "VERIFYING STUDYMATE AI SIMPLIFIED PLATFORM ROUTES"
 Write-Host "================================================="
 
 $allOk = $true
@@ -32,7 +36,7 @@ foreach ($r in $routes) {
 
 Write-Host "================================================="
 if ($allOk) {
-    Write-Host "ALL PRODUCTION ROUTES VERIFIED WITH HTTP 200 OK!"
+    Write-Host "ALL 12 SIMPLIFIED PRODUCT ROUTES VERIFIED WITH HTTP 200 OK!"
 } else {
     Write-Host "SOME ROUTES FAILED VERIFICATION!"
     exit 1

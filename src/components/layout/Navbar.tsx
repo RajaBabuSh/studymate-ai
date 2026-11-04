@@ -17,7 +17,6 @@ import {
   ChevronDown,
   Sliders,
   Megaphone,
-  Compass,
 } from "lucide-react";
 import { StorageRepository } from "@/lib/storage";
 import { Examination, Reminder, Announcement } from "@/types/database";
@@ -266,21 +265,21 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/roadmap"
-                  onClick={() => setShowProfileMenu(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-violet-600 dark:text-violet-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  <Compass className="h-3.5 w-3.5 text-violet-500" />
-                  Smart Roadmap & Targets
-                </Link>
-
-                <Link
-                  href="/onboarding"
+                  href="/settings"
                   onClick={() => setShowProfileMenu(false)}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
                 >
                   <Sliders className="h-3.5 w-3.5 text-slate-400" />
-                  Course & Subject Setup
+                  Settings & Profile
+                </Link>
+
+                <Link
+                  href="/support"
+                  onClick={() => setShowProfileMenu(false)}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+                >
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  Support & Help
                 </Link>
 
                 {isGuest && (

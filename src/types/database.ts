@@ -399,6 +399,20 @@ export interface Reminder {
   created_at: string;
 }
 
+export interface StudentTask {
+  id: string;
+  student_id: string;
+  title: string;
+  description?: string;
+  subject_id?: string;
+  subject_name?: string;
+  due_date: string; // YYYY-MM-DD
+  priority: "low" | "medium" | "high";
+  is_completed: boolean;
+  completed_at?: string;
+  created_at: string;
+}
+
 export interface StudyProgress {
   id: string;
   student_id: string;

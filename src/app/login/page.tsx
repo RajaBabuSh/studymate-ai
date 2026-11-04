@@ -138,16 +138,12 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-slate-300">Password</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResetEmail(email);
-                    setShowForgotModal(true);
-                  }}
-                  className="text-[11px] text-indigo-400 hover:text-indigo-300"
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />

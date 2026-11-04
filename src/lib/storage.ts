@@ -6,6 +6,7 @@ import {
   Timetable,
   StudySession,
   Reminder,
+  StudentTask,
   StudyProgress,
   SavedVideo,
   Note,
@@ -880,6 +881,39 @@ export const StorageRepository = {
   },
   setReminders(reminders: Reminder[], userId?: string): void {
     setJson(this.getUserKey("reminders", userId), reminders);
+  },
+
+  // Student Tasks
+  getTasks(userId?: string): StudentTask[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<StudentTask[]>(this.getUserKey("tasks"), [
+        {
+          id: "task-guest-1",
+          student_id: "guest-student-id",
+          title: "Complete Chapter 1 Practice Questions",
+          subject_name: "General Studies",
+          due_date: new Date().toISOString().split("T")[0],
+          priority: "high",
+          is_completed: false,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "task-guest-2",
+          student_id: "guest-student-id",
+          title: "Revise Summary Notes & Flashcards",
+          subject_name: "General Studies",
+          due_date: new Date().toISOString().split("T")[0],
+          priority: "medium",
+          is_completed: false,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+    return getJson<StudentTask[]>(this.getUserKey("tasks", userId), []);
+  },
+  setTasks(tasks: StudentTask[], userId?: string): void {
+    setJson(this.getUserKey("tasks", userId), tasks);
   },
 
   // Progress

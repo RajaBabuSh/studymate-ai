@@ -2,23 +2,21 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
   BookOpen,
-  Video,
-  BellRing,
-  FileText,
+  CheckSquare,
   TrendingUp,
-  Flame,
+  FileText,
+  HelpCircle,
+  Settings,
+  LogOut,
   Menu,
   X,
   GraduationCap,
   Sparkles,
-  Target,
-  FileQuestion,
-  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -28,71 +26,54 @@ const NAV_ITEMS = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badge: null,
   },
   {
-    name: "Smart Roadmap",
-    href: "/roadmap",
-    icon: Compass,
-    badge: "Auto",
-    highlight: true,
-  },
-  {
-    name: "AI Exam Planner",
-    href: "/exam-planner",
-    icon: Target,
-    badge: "Teacher",
-    highlight: false,
-  },
-  {
-    name: "AI Timetable",
-    href: "/timetable",
-    icon: CalendarDays,
-    badge: "AI",
-    highlight: false,
-  },
-  {
-    name: "Chapter Intelligence",
+    name: "My Subjects",
     href: "/subjects",
     icon: BookOpen,
-    badge: null,
   },
   {
-    name: "Smart Tests",
-    href: "/tests",
-    icon: FileQuestion,
-    badge: "Practice",
+    name: "My Timetable",
+    href: "/timetable",
+    icon: CalendarDays,
   },
   {
-    name: "Teacher Videos",
-    href: "/videos",
-    icon: Video,
-    badge: null,
+    name: "My Tasks",
+    href: "/tasks",
+    icon: CheckSquare,
   },
   {
-    name: "Smart Reminders",
-    href: "/reminders",
-    icon: BellRing,
-    badge: null,
+    name: "My Progress",
+    href: "/progress",
+    icon: TrendingUp,
   },
   {
     name: "My Notes",
     href: "/notes",
     icon: FileText,
-    badge: null,
   },
   {
-    name: "Progress Tracker",
-    href: "/progress",
-    icon: TrendingUp,
-    badge: null,
+    name: "Support",
+    href: "/support",
+    icon: HelpCircle,
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: Settings,
   },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { student, isGuest } = useAuth();
+  const { student, isGuest, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace("/login");
+  };
 
   return (
     <>
@@ -124,8 +105,8 @@ export default function Sidebar() {
       >
         {/* Brand Header */}
         <div className="px-2 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/25">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/25">
               <GraduationCap className="h-6 w-6" />
             </div>
             <div>
@@ -137,9 +118,9 @@ export default function Sidebar() {
                   AI
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Intelligent Study Partner</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Student Study Companion</p>
             </div>
-          </div>
+          </Link>
 
           {/* Student Active Course Pill */}
           {student?.course && (
@@ -147,7 +128,7 @@ export default function Sidebar() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                   <Sparkles className="h-2.5 w-2.5" />
-                  <span>Enrolled Course</span>
+                  <span>Current Course</span>
                 </div>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5">
                   {student.course}
@@ -163,7 +144,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Items */}
-        <nav className="mt-5 flex-1 space-y-1.5">
+        <nav className="mt-4 flex-1 space-y-1 overflow-y-auto pr-1">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -175,7 +156,7 @@ export default function Sidebar() {
                 className={cn(
                   "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all",
                   isActive
-                    ? "bg-indigo-50 text-indigo-700 shadow-sm dark:bg-indigo-950/60 dark:text-indigo-300"
+                    ? "bg-indigo-50 text-indigo-700 shadow-xs dark:bg-indigo-950/60 dark:text-indigo-300"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
                 )}
               >
@@ -191,45 +172,20 @@ export default function Sidebar() {
                   )}
                 />
                 <span className="flex-1">{item.name}</span>
-                {item.badge && (
-                  <span className="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-xs">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Study Streak Card */}
-        <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-purple-50/50 to-white p-3.5 dark:border-indigo-900/50 dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-slate-900 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/20">
-              <Flame className="h-5 w-5 animate-bounce" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-100">7 Day Streak</span>
-                <span className="text-[10px] text-amber-500 font-bold">★ Master</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                Consistency score: 98%
-              </p>
-            </div>
-          </div>
-          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
-              style={{ width: "85%" }}
-            />
-          </div>
-        </div>
-
-        {/* Footer info */}
-        <div className="mt-3 text-center">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
-            StudyMate AI v2.4 • Academic Edition
-          </p>
+        {/* Logout Action Button */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 transition-colors"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
     </>
