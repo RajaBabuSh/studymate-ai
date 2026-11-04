@@ -14,7 +14,7 @@ function StudentDashboardShell({ children }: { children: React.ReactNode }) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#070a13] dark:text-slate-100 antialiased selection:bg-purple-500 selection:text-white transition-colors">
       <Sidebar />
       <div
         className={cn(
@@ -88,24 +88,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Loading state for protected routes
   if (isLoading && !isPublicRoute) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 dark:bg-[#070a13] dark:text-slate-200">
         <Loader2 className="h-8 w-8 text-purple-600 animate-spin mb-3" />
-        <p className="text-xs font-semibold text-slate-600">Loading student workspace...</p>
+        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">Loading student workspace...</p>
       </div>
     );
   }
 
   // Public Landing / Auth pages
   if (isPublicRoute) {
-    return <main className="min-h-screen bg-slate-50">{children}</main>;
+    return <main className="min-h-screen bg-slate-50 dark:bg-[#070a13] dark:text-slate-100">{children}</main>;
   }
 
-  // Onboarding wizard page (standalone focused layout without main sidebar)
-  if (isOnboardingRoute) {
-    return <main className="min-h-screen bg-slate-50 text-slate-900">{children}</main>;
-  }
-
-  // Protected student dashboard & modules with dynamic sidebar state
+  // Protected Student Experience wrapped with responsive Sidebar State
   return (
     <SidebarProvider>
       <StudentDashboardShell>{children}</StudentDashboardShell>

@@ -250,7 +250,7 @@ export default function AcademicManagementPage() {
               </div>
               <div className="mt-3 h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-linear-to-r from-violet-600 to-indigo-600"
+                  className="h-full rounded-full bg-gradient-to-r from-violet-600 to-indigo-600"
                   style={{ width: `${overallPercentage}%` }}
                 />
               </div>
