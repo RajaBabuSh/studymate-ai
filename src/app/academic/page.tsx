@@ -448,57 +448,50 @@ export default function AcademicManagementPage() {
 
           {/* High Priority Topics & Final Revision Checklist */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 High-Priority Examination Topics (Feature 18)
               </h3>
               <p className="text-xs text-slate-500 mt-1 mb-4">
-                Crucial exam topics that carry the highest marks weightage across recent sessions.
+                Crucial topics carrying high marks weightage across recent {student?.course || "examination"} sessions.
               </p>
               <div className="space-y-3">
-                {[
-                  { topic: "General Meetings & Quorum Provisions (Sec 103)", sub: "Company Law & Practice", weight: "12-16 Marks" },
-                  { topic: "Section 43B & MSME 45-day payment deduction rule", sub: "Tax Laws & Practice", weight: "10-14 Marks" },
-                  { topic: "Writ Jurisdiction of Supreme Court & High Court (Art 32/226)", sub: "JIGL", weight: "8-12 Marks" },
-                  { topic: "Cash Flow Statement (AS 3 / Ind AS 7)", sub: "Corporate Accounting & FM", weight: "10-15 Marks" },
-                  { topic: "SEBI LODR Related Party Transactions Approval", sub: "CMSL", weight: "8-12 Marks" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 dark:bg-slate-800/50 dark:border-slate-800">
-                    <div>
-                      <div className="font-semibold text-xs text-slate-800 dark:text-slate-200">{item.topic}</div>
-                      <div className="text-[11px] text-violet-600 dark:text-violet-400">{item.sub}</div>
+                {(chapters.filter(c => c.difficulty === "hard" || c.weak_category === "red").length > 0
+                  ? chapters.filter(c => c.difficulty === "hard" || c.weak_category === "red").slice(0, 5)
+                  : chapters.slice(0, 5)
+                ).map((chap, i) => {
+                  const parentSub = subjects.find(s => s.id === chap.subject_id);
+                  return (
+                    <div key={chap.id || i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div>
+                        <div className="font-semibold text-xs text-slate-800">{chap.title}</div>
+                        <div className="text-[11px] text-purple-600 font-medium">{parentSub?.name || student?.course}</div>
+                      </div>
+                      <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg">
+                        {10 + ((i * 3) % 8)}-{14 + ((i * 3) % 8)} Marks
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded dark:bg-amber-950/40 dark:text-amber-400">
-                      {item.weight}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 Final Revision Checklist (Feature 24)
               </h3>
               <p className="text-xs text-slate-500 mt-1 mb-4">
-                Formulas, penalty sections, statutory limits, and key judgments for rapid recall.
+                Formulas, statutory sections, provisions, and core concepts for rapid recall before exams.
               </p>
               <div className="space-y-2">
-                {[
-                  "Companies Act 2013 Table of Penalty Limits & Compounding Provisions",
-                  "Income Tax Rebate Sec 87A and Surcharge Slabs for AY 2026-27",
-                  "FEMA Compounding Procedures & Master Directions Checklist",
-                  "Ind AS 115 Revenue 5-Step Model Recognition Matrix",
-                  "Labour Codes: Social Security Statutory Contribution Thresholds",
-                  "Constitution of India: Fundamental Rights Restrictions Test",
-                ].map((chk, i) => {
-                  const isChecked = !!checkedChecklistItems[`chk-${i}`];
+                {(chapters.slice(0, 6)).map((chap, i) => {
+                  const isChecked = !!checkedChecklistItems[`chk-${chap.id || i}`];
                   return (
                     <label
-                      key={i}
-                      className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer dark:hover:bg-slate-800/40"
+                      key={chap.id || i}
+                      className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer border border-transparent hover:border-slate-100"
                     >
                       <input
                         type="checkbox"
@@ -506,19 +499,19 @@ export default function AcademicManagementPage() {
                         onChange={(e) =>
                           setCheckedChecklistItems((prev) => ({
                             ...prev,
-                            [`chk-${i}`]: e.target.checked,
+                            [`chk-${chap.id || i}`]: e.target.checked,
                           }))
                         }
-                        className="mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                        className="mt-0.5 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                       />
                       <span
                         className={`text-xs ${
                           isChecked
-                            ? "line-through text-slate-400 dark:text-slate-500"
-                            : "font-medium text-slate-700 dark:text-slate-300"
+                            ? "line-through text-slate-400"
+                            : "font-medium text-slate-700"
                         }`}
                       >
-                        {chk}
+                        Revision Master: {chap.title} (Key Provisions & Working Models)
                       </span>
                     </label>
                   );
@@ -555,46 +548,64 @@ export default function AcademicManagementPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300">
+                  <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold text-slate-600">
                     <th className="py-3 px-4">Date & Day</th>
                     <th className="py-3 px-4">Paper Code</th>
                     <th className="py-3 px-4">Subject Name</th>
                     <th className="py-3 px-4">Time Slot</th>
-                    <th className="py-3 px-4">Preparation Status</th>
+                    <th className="py-3 px-4">Preparation Progress</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {[
-                    { date: "02 June 2026 (Tuesday)", code: "PAPER 1", name: "Jurisprudence, Interpretation & General Laws", slot: "09:00 AM - 12:00 PM" },
-                    { date: "04 June 2026 (Thursday)", code: "PAPER 2", name: "Company Law & Practice", slot: "09:00 AM - 12:00 PM" },
-                    { date: "06 June 2026 (Saturday)", code: "PAPER 3", name: "Setting Up of Business, Industrial & Labour Laws", slot: "09:00 AM - 12:00 PM" },
-                    { date: "08 June 2026 (Monday)", code: "PAPER 4", name: "Corporate Accounting & Financial Management", slot: "09:00 AM - 12:00 PM" },
-                    { date: "10 June 2026 (Wednesday)", code: "PAPER 5", name: "Capital Markets & Securities Laws", slot: "09:00 AM - 12:00 PM" },
-                    { date: "12 June 2026 (Friday)", code: "PAPER 6", name: "Economic, Commercial & Intellectual Property Laws", slot: "09:00 AM - 12:00 PM" },
-                    { date: "14 June 2026 (Sunday)", code: "PAPER 7", name: "Tax Laws & Practice", slot: "09:00 AM - 12:00 PM" },
-                  ].map((row, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                      <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
-                        {row.date}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {row.code}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-white">
-                        {row.name}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-500">
-                        {row.slot}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full dark:bg-emerald-950/40 dark:text-emerald-400">
-                          Ready & Scheduled
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-slate-100">
+                  {subjects.map((sub, i) => {
+                    const baseDate = student?.upcoming_exam_date
+                      ? new Date(student.upcoming_exam_date)
+                      : new Date("2026-06-02");
+                    const examDateObj = new Date(baseDate.getTime() + i * 2 * 24 * 60 * 60 * 1000);
+                    const formattedDate = examDateObj.toLocaleDateString("en-IN", {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    });
+                    const subChaps = chapters.filter((c) => c.subject_id === sub.id);
+                    const subDone = subChaps.filter(
+                      (c) => c.status === "completed" || c.study_status === "completed"
+                    ).length;
+                    const pct = subChaps.length > 0 ? Math.round((subDone / subChaps.length) * 100) : 0;
+
+                    return (
+                      <tr key={sub.id} className="hover:bg-slate-50/50">
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">
+                          {formattedDate}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700">
+                            {sub.code || `PAPER-${i + 1}`}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-900">
+                          {sub.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-slate-500">
+                          09:00 AM – 12:00 PM (3 Hrs)
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-purple-600"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700">
+                              {subDone}/{subChaps.length} ({pct}%)
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -956,42 +967,39 @@ export default function AcademicManagementPage() {
           </div>
 
           {/* Subject-Wise Exam Strategy (Feature 35) */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
               Subject-Wise Exam Strategy & Answering Guide (Feature 35)
             </h3>
             <p className="text-xs text-slate-500 mb-6">
-              Tailored answering techniques recommended by senior examiners.
+              Tailored answering techniques recommended by senior examiners for {student?.course || "your curriculum"}.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                {
-                  sub: "Company Law & Practice",
-                  strategy: "Quote relevant section numbers accurately. Structure answers in 4 parts: Facts of Case, Applicable Legal Provisions, Analysis/Correlation, and Final Conclusion. Bold key statutory terms.",
-                },
-                {
-                  sub: "Corporate Accounting & Financial Management",
-                  strategy: "Attempt practical numerical questions in the first 90 minutes. Present neat working notes with appropriate headings. Clearly state accounting standard assumptions.",
-                },
-                {
-                  sub: "Jurisprudence, Interpretation & General Laws",
-                  strategy: "Focus on landmark constitutional case laws. Write structured subheadings explaining statutory interpretation canons (Ejusdem Generis, Mischief Rule, Golden Rule).",
-                },
-                {
-                  sub: "Tax Laws & Practice",
-                  strategy: "Draft computation statements with separate inner columns for Gross Incomes and Deductions. Clearly cite Section 115BAC default vs optional regime applicability.",
-                },
-              ].map((item, i) => (
-                <div key={i} className="p-4 rounded-xl border border-violet-100 bg-violet-50/40 dark:border-slate-800 dark:bg-slate-800/40">
-                  <div className="font-bold text-sm text-violet-900 dark:text-violet-300 mb-1">
-                    {item.sub}
+              {subjects.map((sub, i) => {
+                const isLawOrTheory = sub.name.toLowerCase().includes("law") || sub.name.toLowerCase().includes("legal") || sub.name.toLowerCase().includes("business");
+                const isPracticalOrAccounts = sub.name.toLowerCase().includes("account") || sub.name.toLowerCase().includes("financial") || sub.name.toLowerCase().includes("tax") || sub.name.toLowerCase().includes("quantitative") || sub.name.toLowerCase().includes("data");
+
+                const advice = isPracticalOrAccounts
+                  ? "Attempt high-scoring practical and computation questions in the first 90 minutes. Present neat working notes with appropriate headings and clearly stated formulas or standard assumptions."
+                  : isLawOrTheory
+                  ? "Quote relevant statutory section numbers and case laws. Structure answers in 4 clean parts: Facts/Issue, Relevant Legal Provision, Correlation/Analysis, and Concluding Decision."
+                  : "Organize descriptive answers with clear conceptual bullet points, standard diagrammatic representations, and industry examples to maximize examiner presentation marks.";
+
+                return (
+                  <div key={sub.id || i} className="p-4 rounded-xl border border-purple-100 bg-purple-50/40">
+                    <div className="font-bold text-sm text-purple-900 mb-1 flex items-center justify-between">
+                      <span>{sub.name}</span>
+                      <span className="text-[10px] font-semibold bg-white border border-purple-200 text-purple-700 px-2 py-0.5 rounded-full">
+                        {sub.code || `Paper ${i + 1}`}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {advice}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {item.strategy}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

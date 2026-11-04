@@ -48,6 +48,7 @@ export interface Student {
   course?: string; // e.g. "CA Foundation", "CS Executive", "BCA", etc.
   institution?: string; // optional college or university
   grade_or_year: string;
+  semester?: string; // e.g. "Semester 1", "Semester 2", "Group 1", "Group 2", etc.
   target_exam: string;
   upcoming_exam_date?: string;
   registration_number?: string;

@@ -118,7 +118,7 @@ export default function AdminChaptersPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-300">
+            <h2 className="text-sm font-bold text-slate-900">
               Configure pedagogical nature, length, and exam weightage weights
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -128,7 +128,7 @@ export default function AdminChaptersPage() {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-500 transition shadow-lg shadow-violet-600/20"
+            className="flex items-center gap-2 rounded-2xl bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-500 transition shadow-xs"
           >
             <Plus className="h-4 w-4" />
             <span>Add Chapter</span>
@@ -136,8 +136,8 @@ export default function AdminChaptersPage() {
         </div>
 
         {notification && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-semibold">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span>{notification}</span>
           </div>
         )}
@@ -150,15 +150,15 @@ export default function AdminChaptersPage() {
               <button
                 key={sub.id}
                 onClick={() => setSelectedSubjectId(sub.id)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
                   isSelected
-                    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/25"
-                    : "border border-slate-800 bg-[#0b0f19] text-slate-400 hover:text-white"
+                    ? "bg-purple-600 text-white shadow-xs font-bold"
+                    : "border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
                 <div
                   className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: sub.color || "#6366f1" }}
+                  style={{ backgroundColor: sub.color || "#7c3aed" }}
                 />
                 <span>{sub.name}</span>
               </button>
@@ -167,10 +167,10 @@ export default function AdminChaptersPage() {
         </div>
 
         {/* Chapters Table */}
-        <div className="rounded-2xl border border-slate-800 bg-[#0b0f19] overflow-hidden shadow-xl">
+        <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-800 bg-slate-900/50 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+              <thead className="border-b border-slate-200 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                 <tr>
                   <th className="px-6 py-4">#</th>
                   <th className="px-6 py-4">Chapter Title</th>
@@ -181,10 +181,10 @@ export default function AdminChaptersPage() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {filteredChapters.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400">
                       No chapters found for selected subject. Click &quot;Add Chapter&quot; above to create one.
                     </td>
                   </tr>
@@ -194,11 +194,11 @@ export default function AdminChaptersPage() {
                     const isMorning = nat === "numerical" || nat === "practical";
 
                     return (
-                      <tr key={chap.id} className="hover:bg-slate-800/30 transition">
-                        <td className="px-6 py-4 font-mono text-slate-500">{idx + 1}</td>
+                      <tr key={chap.id} className="hover:bg-slate-50/50 transition">
+                        <td className="px-6 py-4 font-mono text-slate-400">{idx + 1}</td>
                         <td className="px-6 py-4">
-                          <p className="font-bold text-white text-xs">{chap.title}</p>
-                          <span className="text-[10px] text-slate-500">
+                          <p className="font-bold text-slate-900 text-xs">{chap.title}</p>
+                          <span className="text-[10px] text-slate-400">
                             Difficulty: {chap.difficulty}
                           </span>
                         </td>
@@ -209,7 +209,7 @@ export default function AdminChaptersPage() {
                             onChange={(e) =>
                               handleUpdateNature(chap.id, e.target.value as ChapterNature)
                             }
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white focus:outline-none"
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-800 focus:bg-white focus:outline-none"
                           >
                             <option value="numerical">Numerical Practice</option>
                             <option value="theory">Theory & Concepts</option>
@@ -224,7 +224,7 @@ export default function AdminChaptersPage() {
                             onChange={(e) =>
                               handleUpdateImportance(chap.id, e.target.value as ExamImportance)
                             }
-                            className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white focus:outline-none"
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-800 focus:bg-white focus:outline-none"
                           >
                             <option value="high">High Weightage (Priority 1)</option>
                             <option value="medium">Medium Weightage (Priority 2)</option>
@@ -233,18 +233,18 @@ export default function AdminChaptersPage() {
                         </td>
 
                         <td className="px-6 py-4">
-                          <span className="text-slate-300 font-semibold">{chap.estimated_hours} hrs</span>
+                          <span className="text-slate-800 font-semibold">{chap.estimated_hours} hrs</span>
                         </td>
 
                         <td className="px-6 py-4">
                           {isMorning ? (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300 border border-amber-500/20">
-                              <Sun className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-200">
+                              <Sun className="h-3 w-3 text-amber-600" />
                               Morning Alert Peak
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/20">
-                              <Moon className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-800 border border-blue-200">
+                              <Moon className="h-3 w-3 text-blue-600" />
                               Afternoon / Evening
                             </span>
                           )}
@@ -253,7 +253,7 @@ export default function AdminChaptersPage() {
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDelete(chap.id, chap.title)}
-                            className="text-slate-500 hover:text-rose-400 transition"
+                            className="text-slate-400 hover:text-rose-600 transition"
                             title="Remove chapter"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -270,13 +270,13 @@ export default function AdminChaptersPage() {
 
         {/* Add Chapter Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#0b0f19] p-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-white">Add Curriculum Chapter</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-slate-900">Add Curriculum Chapter</h3>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-white text-sm"
+                  className="text-slate-400 hover:text-slate-700 text-sm"
                 >
                   ✕
                 </button>
@@ -284,11 +284,11 @@ export default function AdminChaptersPage() {
 
               <form onSubmit={handleAddChapter} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Target Subject</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Target Subject</label>
                   <select
                     value={selectedSubjectId}
                     onChange={(e) => setSelectedSubjectId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-900 focus:bg-white focus:outline-none"
                   >
                     {subjects.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -299,24 +299,24 @@ export default function AdminChaptersPage() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Chapter Title</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Chapter Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Schedule III Financial Statements Analysis"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-violet-500 focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">Pedagogical Nature</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Pedagogical Nature</label>
                     <select
                       value={nature}
                       onChange={(e) => setNature(e.target.value as ChapterNature)}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-900 focus:bg-white focus:outline-none"
                     >
                       <option value="numerical">Numerical Practice</option>
                       <option value="theory">Theory & Concepts</option>
@@ -326,11 +326,11 @@ export default function AdminChaptersPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">Exam Weightage</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Exam Weightage</label>
                     <select
                       value={importance}
                       onChange={(e) => setImportance(e.target.value as ExamImportance)}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-900 focus:bg-white focus:outline-none"
                     >
                       <option value="high">High Weightage</option>
                       <option value="medium">Medium Weightage</option>
@@ -340,7 +340,7 @@ export default function AdminChaptersPage() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Recommended Hours</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Recommended Hours</label>
                   <input
                     type="number"
                     step="0.5"
@@ -348,7 +348,7 @@ export default function AdminChaptersPage() {
                     max="20"
                     value={hours}
                     onChange={(e) => setHours(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-slate-900 focus:bg-white focus:outline-none"
                   />
                 </div>
 
@@ -356,13 +356,13 @@ export default function AdminChaptersPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="rounded-xl border border-slate-700 px-4 py-2 text-slate-300 hover:text-white"
+                    className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-600 hover:bg-slate-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-violet-600 px-5 py-2 font-bold text-white hover:bg-violet-500 transition"
+                    className="rounded-2xl bg-purple-600 px-5 py-2 font-bold text-white hover:bg-purple-500 transition shadow-xs"
                   >
                     Save Chapter
                   </button>

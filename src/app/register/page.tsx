@@ -15,11 +15,15 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [course, setCourse] = useState("CS Executive");
+  const [customCourse, setCustomCourse] = useState("");
+  const [semester, setSemester] = useState("Both Groups");
   const [targetExam, setTargetExam] = useState("");
   const [dailyHours, setDailyHours] = useState(4.5);
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const effectiveCourse = course === "Other" ? (customCourse.trim() || "General Studies") : course;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,20 +36,26 @@ export default function RegisterPage() {
     if (res.error) {
       setError(res.error);
     } else {
-      // Update the student profile with custom course and daily hours
       const session = StorageRepository.getActiveSession();
-      const activeStudent = StorageRepository.getStudent(session?.userId);
-      if (activeStudent) {
-        StorageRepository.setStudent(
-          {
-            ...activeStudent,
-            course: course.trim(),
-            target_exam: targetExam.trim() || `${course.trim()} Examination`,
-            daily_available_hours: dailyHours,
-            onboarding_completed: true,
-          },
-          session?.userId
-        );
+      const effectiveId = session?.userId;
+      if (effectiveId) {
+        // Initialize student enrolled course and dynamically seed curriculum
+        StorageRepository.setStudentCourse(effectiveCourse, semester, effectiveId);
+
+        const activeStudent = StorageRepository.getStudent(effectiveId);
+        if (activeStudent) {
+          StorageRepository.setStudent(
+            {
+              ...activeStudent,
+              course: effectiveCourse,
+              semester: semester,
+              target_exam: targetExam.trim() || `${effectiveCourse} Examination`,
+              daily_available_hours: dailyHours,
+              onboarding_completed: true,
+            },
+            effectiveId
+          );
+        }
       }
       router.push("/dashboard");
     }
@@ -172,17 +182,89 @@ export default function RegisterPage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Enrolled Course</label>
                   <div className="relative">
                     <BookOpen className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      required
+                    <select
                       value={course}
-                      onChange={(e) => setCourse(e.target.value)}
-                      placeholder="e.g. CS Executive"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
-                    />
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCourse(val);
+                        if (val.startsWith("B.")) setSemester("Semester 1");
+                        else if (val.startsWith("CA") || val.startsWith("CS")) setSemester("Both Groups");
+                        else setSemester("Stage 1");
+                      }}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs text-slate-900 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
+                    >
+                      <optgroup label="Professional Courses - CS">
+                        <option value="CS Executive">CS Executive (Official Syllabus)</option>
+                        <option value="CSEET">CSEET (CS Entrance Test)</option>
+                        <option value="CS Professional">CS Professional</option>
+                      </optgroup>
+                      <optgroup label="Professional Courses - CA">
+                        <option value="CA Foundation">CA Foundation</option>
+                        <option value="CA Intermediate">CA Intermediate</option>
+                        <option value="CA Final">CA Final</option>
+                      </optgroup>
+                      <optgroup label="Undergraduate Degree Courses">
+                        <option value="B.Com">B.Com (Bachelor of Commerce)</option>
+                        <option value="BBA">BBA (Business Administration)</option>
+                        <option value="BCA">BCA (Computer Applications)</option>
+                      </optgroup>
+                      <optgroup label="Other Programmes">
+                        <option value="Other">Other Course / Custom Syllabus</option>
+                      </optgroup>
+                    </select>
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Semester / Group / Stage</label>
+                  <select
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
+                  >
+                    {course.startsWith("B.") ? (
+                      <>
+                        <option value="Semester 1">Semester 1</option>
+                        <option value="Semester 2">Semester 2</option>
+                        <option value="Semester 3">Semester 3</option>
+                        <option value="Semester 4">Semester 4</option>
+                        <option value="Semester 5">Semester 5</option>
+                        <option value="Semester 6">Semester 6</option>
+                      </>
+                    ) : course === "Other" ? (
+                      <>
+                        <option value="Year 1">Year 1</option>
+                        <option value="Year 2">Year 2</option>
+                        <option value="Year 3">Year 3</option>
+                        <option value="All Subjects">All Subjects</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Both Groups">Both Groups (Full Curriculum)</option>
+                        <option value="Group 1">Group 1</option>
+                        <option value="Group 2">Group 2</option>
+                        <option value="All Papers">All Papers</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {course === "Other" && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Custom Course Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={customCourse}
+                    onChange={(e) => setCustomCourse(e.target.value)}
+                    placeholder="e.g. Master of Computer Applications (MCA)"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Daily Study Target</label>
                   <div className="relative">
@@ -200,19 +282,19 @@ export default function RegisterPage() {
                     </select>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Target Examination (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={targetExam}
-                  onChange={(e) => setTargetExam(e.target.value)}
-                  placeholder="e.g. December 2026 Examination"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Target Examination (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={targetExam}
+                    onChange={(e) => setTargetExam(e.target.value)}
+                    placeholder="e.g. December 2026 Examination"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:bg-white transition-all"
+                  />
+                </div>
               </div>
             </div>
 

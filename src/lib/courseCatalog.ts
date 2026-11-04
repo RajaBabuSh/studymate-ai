@@ -1,4 +1,5 @@
 import { CS_EXECUTIVE_OFFICIAL_CURRICULUM } from "@/lib/csExecutiveCurriculum";
+import { Subject, Chapter } from "@/types/database";
 
 export interface CatalogChapterDetailed {
   name: string;
@@ -346,6 +347,65 @@ export const COURSE_CATALOG: CourseDefinition[] = [
   },
 
   // --- Professional: CS ---
+  {
+    id: "cs-eet",
+    name: "CSEET",
+    category: "Professional",
+    description: "ICSI CS Executive Entrance Test (Foundation Entry Level)",
+    examBody: "ICSI (The Institute of Company Secretaries of India)",
+    syllabusVersion: "ICSI CSEET Scheme",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Business Communication",
+        code: "PAPER-1",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Essentials of Good English & Grammar",
+          "Business Communication Basics & Methods",
+          "Business Correspondence & Memorandums",
+          "Common Business Terminology",
+        ],
+      },
+      {
+        name: "Legal Aptitude & Logical Reasoning",
+        code: "PAPER-2",
+        color: "#8b5cf6",
+        icon: "Shield",
+        defaultChapters: [
+          "Constitution of India Overview",
+          "Elements of Company Law",
+          "Elements of Law of Torts & Contracts",
+          "Logical Reasoning & Analytical Puzzles",
+        ],
+      },
+      {
+        name: "Economic & Business Environment",
+        code: "PAPER-3",
+        color: "#0ea5e9",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Basics of Demand and Supply & National Income",
+          "Indian Union Budget & Financial Markets",
+          "Indian Financial Ecosystem & Regulators",
+          "Government Initiatives to Foster Entrepreneurship",
+        ],
+      },
+      {
+        name: "Current Affairs & Quantitative Aptitude",
+        code: "PAPER-4",
+        color: "#10b981",
+        icon: "CheckCircle",
+        defaultChapters: [
+          "Current Affairs (National & International)",
+          "Financial & Business News Developments",
+          "Basic Number Systems & Ratios",
+          "Percentages, Profit & Loss, Simple and Compound Interest",
+        ],
+      },
+    ],
+  },
   {
     id: "cs-executive",
     name: "CS Executive",
@@ -949,4 +1009,51 @@ export function findSubjectInCatalog(courseNameOrId: string, subjectNameOrCode: 
       s.code.toLowerCase() === sLower ||
       s.name.toLowerCase().includes(sLower)
   );
+}
+
+export function initializeCourseCurriculumForStudent(
+  courseNameOrId: string,
+  studentId: string
+): { subjects: Subject[]; chapters: Chapter[] } {
+  const course =
+    getCourseByName(courseNameOrId) ||
+    getCourseById(courseNameOrId) ||
+    COURSE_CATALOG[1]; // default fallback
+  const subjects: Subject[] = [];
+  const chapters: Chapter[] = [];
+
+  course.subjects.forEach((catSub, sIdx) => {
+    const subId = `sub-${studentId}-${sIdx + 1}`;
+    subjects.push({
+      id: subId,
+      student_id: studentId,
+      course: course.name,
+      name: catSub.name,
+      code: catSub.code,
+      color: catSub.color || "#7c3aed",
+      icon: catSub.icon || "BookOpen",
+      total_chapters: catSub.defaultChapters.length,
+      completed_chapters: 0,
+      created_at: new Date().toISOString(),
+    });
+
+    catSub.defaultChapters.forEach((chapTitle, cIdx) => {
+      chapters.push({
+        id: `chap-${studentId}-${sIdx + 1}-${cIdx + 1}`,
+        subject_id: subId,
+        student_id: studentId,
+        title: chapTitle,
+        chapter_number: cIdx + 1,
+        difficulty: cIdx % 3 === 0 ? "hard" : cIdx % 3 === 1 ? "medium" : "easy",
+        estimated_hours: 3.5,
+        status: "pending",
+        study_status: "not_started",
+        revision_status: "not_started",
+        notes_count: 0,
+        created_at: new Date().toISOString(),
+      });
+    });
+  });
+
+  return { subjects, chapters };
 }

@@ -39,6 +39,7 @@ import {
 } from "@/types/database";
 import { ReadinessEngine } from "@/lib/readinessEngine";
 import { CS_EXECUTIVE_OFFICIAL_CURRICULUM } from "@/lib/csExecutiveCurriculum";
+import { initializeCourseCurriculumForStudent } from "@/lib/courseCatalog";
 
 const ACTIVE_SESSION_KEY = "studymate_active_session";
 const REGISTERED_USERS_KEY = "studymate_registered_users_db";
@@ -604,6 +605,34 @@ export const StorageRepository = {
       account.fullName = student.full_name;
       this.saveRegisteredAccount(account);
     }
+  },
+
+  // Dynamic Course & Semester Curriculum Initializer (Multi-course CA, CS, B.Com, BBA, BCA, etc.)
+  setStudentCourse(
+    courseName: string,
+    semester?: string,
+    userId?: string
+  ): { subjectsCount: number; chaptersCount: number } {
+    const session = this.getActiveSession();
+    const effectiveId = userId || session?.userId;
+    if (!effectiveId) return { subjectsCount: 0, chaptersCount: 0 };
+
+    const student = this.getStudent(effectiveId);
+    if (student) {
+      student.course = courseName;
+      if (semester) student.semester = semester;
+      student.updated_at = new Date().toISOString();
+      this.setStudent(student, effectiveId);
+    }
+
+    const { subjects, chapters } = initializeCourseCurriculumForStudent(
+      courseName,
+      effectiveId
+    );
+    this.setSubjects(subjects, effectiveId);
+    this.setChapters(chapters, effectiveId);
+
+    return { subjectsCount: subjects.length, chaptersCount: chapters.length };
   },
 
   // Subjects

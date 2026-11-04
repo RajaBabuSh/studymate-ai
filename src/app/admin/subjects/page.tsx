@@ -15,12 +15,12 @@ import {
 
 export default function AdminSubjectsPage() {
   const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string>("CA Intermediate");
+  const [selectedCourse, setSelectedCourse] = useState<string>("CS Executive");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [color, setColor] = useState("#6366f1");
+  const [color, setColor] = useState("#7c3aed");
   const [totalChapters, setTotalChapters] = useState(8);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -87,7 +87,7 @@ export default function AdminSubjectsPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-300">
+            <h2 className="text-sm font-bold text-slate-900">
               Manage subject syllabi, official codes, and chapter divisions
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -97,7 +97,7 @@ export default function AdminSubjectsPage() {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-500 transition shadow-lg shadow-violet-600/20"
+            className="flex items-center gap-2 rounded-2xl bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-500 transition shadow-xs"
           >
             <Plus className="h-4 w-4" />
             <span>Add New Subject</span>
@@ -105,30 +105,30 @@ export default function AdminSubjectsPage() {
         </div>
 
         {notification && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-300">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-semibold">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span>{notification}</span>
           </div>
         )}
 
         {/* Course Filter Bar */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-[#0b0f19] px-3.5 py-2 text-xs text-slate-400">
-            <Filter className="h-3.5 w-3.5 text-violet-400" />
-            <span>Select Course Syllabus:</span>
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-600 shadow-xs">
+            <Filter className="h-3.5 w-3.5 text-purple-600" />
+            <span className="font-semibold">Select Course:</span>
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="bg-transparent text-white font-medium focus:outline-none"
+              className="bg-transparent text-slate-900 font-bold focus:outline-none cursor-pointer"
             >
               {courses.map((c) => (
-                <option key={c.id} value={c.name} className="bg-[#0b0f19] text-white">
+                <option key={c.id} value={c.name}>
                   {c.name}
                 </option>
               ))}
             </select>
           </div>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 font-medium">
             Showing {filteredSubjects.length} subjects in {selectedCourse}
           </span>
         </div>
@@ -138,42 +138,41 @@ export default function AdminSubjectsPage() {
           {filteredSubjects.map((sub) => (
             <div
               key={sub.id}
-              className="rounded-2xl border border-slate-800 bg-[#0b0f19] p-5 hover:border-slate-700 transition-all shadow-md relative overflow-hidden"
+              className="rounded-2xl border border-slate-200/80 bg-white p-5 hover:border-purple-300 transition-all shadow-xs hover:shadow-sm relative overflow-hidden"
             >
               <div
                 className="absolute top-0 left-0 right-0 h-1"
-                style={{ backgroundColor: sub.color || "#6366f1" }}
+                style={{ backgroundColor: sub.color || "#7c3aed" }}
               />
 
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white font-bold"
-                    style={{ backgroundColor: `${sub.color || "#6366f1"}20`, color: sub.color || "#818cf8" }}
+                    className="flex h-10 w-10 items-center justify-center rounded-2xl text-purple-700 font-bold bg-purple-50 border border-purple-100 shadow-xs"
                   >
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-sm">{sub.name}</h3>
-                    <span className="font-mono text-[11px] text-slate-400">{sub.code || "PAPER"}</span>
+                    <h3 className="font-bold text-slate-900 text-sm">{sub.name}</h3>
+                    <span className="font-mono text-[11px] text-purple-600 font-semibold">{sub.code || "PAPER"}</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => handleDeleteSubject(sub.id, sub.name)}
-                  className="text-slate-500 hover:text-rose-400 transition"
+                  className="text-slate-400 hover:text-rose-600 transition"
                   title="Remove subject"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                 <div className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-violet-400" />
-                  <span><strong>{sub.total_chapters}</strong> Chapters</span>
+                  <Layers className="h-3.5 w-3.5 text-purple-600" />
+                  <span><strong className="text-slate-800">{sub.total_chapters}</strong> Chapters</span>
                 </div>
-                <span className="rounded-md bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700 border border-purple-100">
                   {sub.course || selectedCourse}
                 </span>
               </div>
@@ -183,13 +182,13 @@ export default function AdminSubjectsPage() {
 
         {/* Add Subject Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-[#0b0f19] p-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                <h3 className="text-sm font-bold text-white">Add Curriculum Subject</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <h3 className="text-sm font-bold text-slate-900">Add Curriculum Subject</h3>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-slate-400 hover:text-white text-sm"
+                  className="text-slate-400 hover:text-slate-700 text-sm"
                 >
                   ✕
                 </button>
@@ -197,31 +196,31 @@ export default function AdminSubjectsPage() {
 
               <form onSubmit={handleAddSubject} className="space-y-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Subject Name</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Subject Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Strategic Management & Business Ethics"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-violet-500 focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">Paper Code</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Paper Code</label>
                     <input
                       type="text"
                       placeholder="e.g. PAPER-5"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-violet-500 focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-300 mb-1">Total Chapters</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Total Chapters</label>
                     <input
                       type="number"
                       required
@@ -229,21 +228,21 @@ export default function AdminSubjectsPage() {
                       max={40}
                       value={totalChapters}
                       onChange={(e) => setTotalChapters(Number(e.target.value))}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:border-violet-500 focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Theme Color</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Theme Color</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
                       value={color}
                       onChange={(e) => setColor(e.target.value)}
-                      className="h-8 w-12 rounded cursor-pointer border border-slate-700 bg-transparent"
+                      className="h-8 w-12 rounded cursor-pointer border border-slate-200 bg-transparent"
                     />
-                    <span className="font-mono text-slate-400 text-xs">{color}</span>
+                    <span className="font-mono text-slate-500 text-xs">{color}</span>
                   </div>
                 </div>
 
@@ -251,13 +250,13 @@ export default function AdminSubjectsPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
-                    className="rounded-xl border border-slate-700 px-4 py-2 text-slate-300 hover:text-white"
+                    className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-600 hover:bg-slate-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-violet-600 px-5 py-2 font-bold text-white hover:bg-violet-500 transition"
+                    className="rounded-2xl bg-purple-600 px-5 py-2 font-bold text-white hover:bg-purple-500 transition shadow-xs"
                   >
                     Save Subject
                   </button>
