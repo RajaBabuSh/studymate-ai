@@ -1,0 +1,952 @@
+import { CS_EXECUTIVE_OFFICIAL_CURRICULUM } from "@/lib/csExecutiveCurriculum";
+
+export interface CatalogChapterDetailed {
+  name: string;
+  subtopics?: string[];
+  nature: "numerical" | "theory" | "practical" | "mixed";
+  difficulty: "easy" | "medium" | "hard";
+  estimatedHours: number;
+  weightageMarks?: number;
+}
+
+export interface CatalogSubject {
+  name: string;
+  code: string;
+  color: string;
+  icon: string;
+  examBody?: string;
+  syllabusVersion?: string;
+  isVerified?: boolean;
+  defaultChapters: string[];
+}
+
+export interface CourseDefinition {
+  id: string;
+  name: string;
+  category: "Professional" | "Undergraduate" | "School" | "Other";
+  description: string;
+  examBody: string;
+  syllabusVersion: string;
+  isVerified: boolean;
+  subjects: CatalogSubject[];
+}
+
+export const COURSE_CATALOG: CourseDefinition[] = [
+  // --- Professional: CA ---
+  {
+    id: "ca-foundation",
+    name: "CA Foundation",
+    category: "Professional",
+    description: "ICAI Chartered Accountancy Entry Level Examination",
+    examBody: "ICAI (The Institute of Chartered Accountants of India)",
+    syllabusVersion: "ICAI New Scheme 2024-2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Accounting",
+        code: "PAPER-1",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Theoretical Framework of Accounting",
+          "Accounting Process (Journal, Ledger, Trial Balance)",
+          "Bank Reconciliation Statement (BRS)",
+          "Inventories Valuation (FIFO, Weighted Avg)",
+          "Depreciation and Amortization",
+          "Bills of Exchange and Promissory Notes",
+          "Final Accounts of Sole Proprietors",
+          "Financial Statements of Not-for-Profit Organizations",
+          "Accounts from Incomplete Records (Single Entry)",
+          "Partnership Accounts & Dissolution",
+          "Company Accounts (Issue & Forfeiture of Shares)",
+        ],
+      },
+      {
+        name: "Business Laws",
+        code: "PAPER-2",
+        color: "#8b5cf6",
+        icon: "Scale",
+        defaultChapters: [
+          "Indian Regulatory Framework",
+          "The Indian Contract Act, 1872 - General Principles",
+          "The Indian Contract Act, 1872 - Special Contracts",
+          "The Sale of Goods Act, 1930",
+          "The Indian Partnership Act, 1932",
+          "The Limited Liability Partnership Act, 2008",
+          "The Companies Act, 2013 - Incorporation & Shares",
+          "The Negotiable Instruments Act, 1881",
+        ],
+      },
+      {
+        name: "Quantitative Aptitude (Maths, LR & Stats)",
+        code: "PAPER-3",
+        color: "#3b82f6",
+        icon: "Calculator",
+        defaultChapters: [
+          "Ratio, Proportion, Indices and Logarithms",
+          "Equations and Linear Inequalities",
+          "Mathematics of Finance (Simple & Compound Interest, Annuity)",
+          "Permutations and Combinations",
+          "Sequence and Series (AP & GP)",
+          "Sets, Relations and Functions, Calculus Intro",
+          "Logical Reasoning: Number Series, Coding & Decoding",
+          "Logical Reasoning: Blood Relations & Direction Tests",
+          "Statistical Representation of Data",
+          "Measures of Central Tendency and Dispersion",
+          "Probability & Theoretical Distributions",
+          "Correlation and Regression",
+          "Index Numbers",
+        ],
+      },
+      {
+        name: "Business Economics",
+        code: "PAPER-4",
+        color: "#10b981",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Introduction to Business Economics",
+          "Theory of Demand and Supply",
+          "Theory of Production and Cost",
+          "Price Determination in Different Markets",
+          "Determination of National Income",
+          "Public Finance & Fiscal Policy",
+          "Money Market & Monetary Policy",
+          "International Trade & Foreign Exchange",
+          "Indian Economy Overview",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ca-intermediate",
+    name: "CA Intermediate",
+    category: "Professional",
+    description: "ICAI Chartered Accountancy Second Stage Examination",
+    examBody: "ICAI (The Institute of Chartered Accountants of India)",
+    syllabusVersion: "ICAI New Scheme 2024-2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Advanced Accounting",
+        code: "GROUP-1 P1",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Accounting Standards (AS 1, 2, 3, 10, 11, 12, 13, 16)",
+          "Financial Statements of Companies (Schedule III)",
+          "Buyback of Securities & Differential Rights",
+          "Amalgamation and Reconstruction of Companies",
+          "Accounting for Branches including Foreign Branches",
+          "Internal Reconstruction",
+          "Consolidated Financial Statements",
+        ],
+      },
+      {
+        name: "Corporate and Other Laws",
+        code: "GROUP-1 P2",
+        color: "#8b5cf6",
+        icon: "Scale",
+        defaultChapters: [
+          "Preliminary & Incorporation of Company",
+          "Prospectus and Allotment of Securities",
+          "Share Capital and Debentures",
+          "Acceptance of Deposits by Companies",
+          "Registration of Charges & Management Meetings",
+          "Declaration and Payment of Dividend",
+          "Accounts of Companies & Audit Requirements",
+          "The General Clauses Act, 1897",
+          "Interpretation of Statutes",
+          "The Foreign Exchange Management Act (FEMA), 1999",
+        ],
+      },
+      {
+        name: "Taxation (Direct & Indirect Tax)",
+        code: "GROUP-1 P3",
+        color: "#ef4444",
+        icon: "Receipt",
+        defaultChapters: [
+          "Income Tax: Basic Concepts & Residential Status",
+          "Heads of Income: Salaries & House Property",
+          "Heads of Income: Profits & Gains of Business/Profession (PGBP)",
+          "Heads of Income: Capital Gains & Other Sources",
+          "Clubbing of Income and Set-off of Losses",
+          "Deductions from Gross Total Income (Chapter VI-A)",
+          "Computation of Total Income and Tax Payable",
+          "TDS, TCS and Advance Tax",
+          "GST: Concept, Supply under GST, Charge of GST",
+          "GST: Exemption from GST, Time and Value of Supply",
+          "Input Tax Credit (ITC) & Registration under GST",
+          "Tax Invoice, Credit & Debit Notes, Accounts & E-way Bill",
+        ],
+      },
+      {
+        name: "Cost and Management Accounting",
+        code: "GROUP-2 P4",
+        color: "#f59e0b",
+        icon: "PieChart",
+        defaultChapters: [
+          "Introduction to Cost and Management Accounting",
+          "Material Cost & Control Techniques",
+          "Employee (Labor) Cost and Direct Expenses",
+          "Overheads (Absorption and Activity Based Costing)",
+          "Cost Sheet Preparation",
+          "Cost Accounting Systems (Integrated & Non-Integrated)",
+          "Job, Batch, and Contract Costing",
+          "Process & Operation Costing",
+          "Standard Costing & Variance Analysis",
+          "Marginal Costing & CVP Analysis",
+          "Budget and Budgetary Control",
+        ],
+      },
+      {
+        name: "Auditing and Ethics",
+        code: "GROUP-2 P5",
+        color: "#06b6d4",
+        icon: "ShieldCheck",
+        defaultChapters: [
+          "Nature, Objective and Scope of Audit (SA 200)",
+          "Audit Strategy, Audit Planning and Audit Programme",
+          "Risk Assessment and Internal Control (SA 315)",
+          "Audit Evidence and Sampling (SA 500, SA 530)",
+          "Audit Documentation (SA 230)",
+          "Completion and Review (Subsequent Events, Going Concern)",
+          "Audit Report & Modified Opinions (SA 700, 705, 706)",
+          "Special Features of Audit of Different Types of Entities",
+          "Audit of Items of Financial Statements",
+        ],
+      },
+      {
+        name: "Financial Management and Strategic Management",
+        code: "GROUP-2 P6",
+        color: "#10b981",
+        icon: "BarChart3",
+        defaultChapters: [
+          "Scope and Objectives of Financial Management",
+          "Financial Analysis and Planning - Ratio Analysis",
+          "Cost of Capital (WACC)",
+          "Financing Decisions - Capital Structure",
+          "Financing Decisions - Leverages",
+          "Investment Decisions - Capital Budgeting",
+          "Management of Working Capital",
+          "Strategic Management Introduction & Strategic Analysis",
+          "Formulation of Functional & Business Strategy",
+          "Strategic Implementation and Control",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ca-final",
+    name: "CA Final",
+    category: "Professional",
+    description: "ICAI Chartered Accountancy Ultimate Qualifying Examination",
+    examBody: "ICAI (The Institute of Chartered Accountants of India)",
+    syllabusVersion: "ICAI New Scheme 2024-2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Financial Reporting (Ind AS)",
+        code: "GROUP-1 P1",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Framework for Preparation of Financial Statements under Ind AS",
+          "Ind AS on Presentation of Items in Financial Statements",
+          "Ind AS on Measurement (Ind AS 16, 38, 40, 105)",
+          "Ind AS 115 (Revenue from Contracts with Customers)",
+          "Ind AS 116 (Leases)",
+          "Ind AS on Financial Instruments (Ind AS 32, 107, 109)",
+          "Business Combinations & Corporate Restructuring (Ind AS 103)",
+          "Consolidated and Separate Financial Statements (Ind AS 110, 27)",
+        ],
+      },
+      {
+        name: "Advanced Financial Management",
+        code: "GROUP-1 P2",
+        color: "#3b82f6",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Financial Policy and Corporate Strategy",
+          "Risk Evaluation and Advanced Capital Budgeting",
+          "Security Analysis and Portfolio Management",
+          "Securitization & Mutual Funds",
+          "Derivatives Analysis and Valuation (Futures, Options, Swaps)",
+          "Foreign Exchange Exposure and Risk Management",
+          "International Financial Management",
+          "Interest Rate Risk Management",
+          "Business Valuation & Mergers, Acquisitions",
+        ],
+      },
+      {
+        name: "Advanced Auditing, Assurance & Ethics",
+        code: "GROUP-1 P3",
+        color: "#06b6d4",
+        icon: "ShieldCheck",
+        defaultChapters: [
+          "Quality Management (SQC 1, SA 220)",
+          "General Principles and Auditor Responsibilities (SAs 200-299)",
+          "Audit Planning, Strategy and Execution (SAs 300-499)",
+          "Audit Evidence & Specific Areas (SAs 500-599)",
+          "Using Work of Others & Audit Conclusions (SAs 600-799)",
+          "Specialized Areas & Digital Auditing (Data Analytics)",
+          "Audit of Banks and Non-Banking Financial Companies (NBFCs)",
+          "Internal Audit, Due Diligence, Investigation & Forensic Audit",
+          "Professional Ethics and Code of Conduct",
+        ],
+      },
+      {
+        name: "Direct Tax Laws and International Taxation",
+        code: "GROUP-2 P4",
+        color: "#ef4444",
+        icon: "Receipt",
+        defaultChapters: [
+          "Special Provisions relating to Company Assessment",
+          "Tax Planning, Tax Avoidance & Tax Evasion (GAAR)",
+          "Assessment of Trusts, Political Parties and Special Entities",
+          "Appeals, Rectification, Revision and Settlement",
+          "Search, Seizure and Assessment under Black Money Act",
+          "Transfer Pricing and Other Anti-Avoidance Measures",
+          "Non-Resident Taxation & Equalization Levy",
+          "Double Taxation Relief (DTAA under Section 90, 91)",
+          "Model Tax Conventions (OECD, UN) and BEPS Action Plans",
+        ],
+      },
+      {
+        name: "Indirect Tax Laws (GST & Customs)",
+        code: "GROUP-2 P5",
+        color: "#f59e0b",
+        icon: "FileCheck",
+        defaultChapters: [
+          "Supply under GST and Charge of Tax",
+          "Exemptions, Place of Supply & Time of Supply",
+          "Value of Supply & Input Tax Credit (ITC) Complexities",
+          "Registration, Tax Invoice, Accounts and Records",
+          "Payment of Tax, TDS & TCS, Refunds Mechanism",
+          "Assessment, Audit, Inspection, Search, Seizure and Arrest",
+          "Demands, Recovery, Offenses, Penalties and Appeals",
+          "Customs Law: Levy, Valuation, Import & Export Procedures",
+          "Baggage, Postal Goods, Duty Drawback & Foreign Trade Policy (FTP)",
+        ],
+      },
+      {
+        name: "Integrated Business Solutions (Multi-Disciplinary)",
+        code: "GROUP-2 P6",
+        color: "#10b981",
+        icon: "Layers",
+        defaultChapters: [
+          "Case Studies: Corporate Governance & Business Ethics",
+          "Case Studies: Financial Reporting & Ind AS Application",
+          "Case Studies: Strategic Financial Management & Valuation",
+          "Case Studies: Direct and Indirect Tax Structuring",
+          "Case Studies: Insolvency and Bankruptcy Code (IBC) Resolution",
+          "Case Studies: Economic Laws, FEMA & SEBI Regulations",
+        ],
+      },
+    ],
+  },
+
+  // --- Professional: CS ---
+  {
+    id: "cs-executive",
+    name: "CS Executive",
+    category: "Professional",
+    description: "ICSI Company Secretary Executive Programme (Official Study Lessons Syllabus)",
+    examBody: "ICSI (The Institute of Company Secretaries of India)",
+    syllabusVersion: "ICSI Official Study Lessons (128 Chapters)",
+    isVerified: true,
+    subjects: CS_EXECUTIVE_OFFICIAL_CURRICULUM.map((s) => ({
+      name: s.name,
+      code: s.code,
+      color: s.color,
+      icon: s.icon,
+      examBody: "ICSI (The Institute of Company Secretaries of India)",
+      syllabusVersion: "ICSI Official Study Lessons (128 Chapters)",
+      isVerified: true,
+      defaultChapters: s.chapters.map((c) => c.title),
+    })),
+  },
+  {
+    id: "cs-professional",
+    name: "CS Professional",
+    category: "Professional",
+    description: "ICSI Company Secretary Professional Final Programme",
+    examBody: "ICSI (The Institute of Company Secretaries of India)",
+    syllabusVersion: "ICSI Syllabus 2022/2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "ESG - Principles & Practice",
+        code: "GROUP-1 P1",
+        color: "#10b981",
+        icon: "Leaf",
+        defaultChapters: [
+          "Sustainability and Environmental Social Governance Foundations",
+          "Climate Change, Carbon Credits and Global Frameworks",
+          "Corporate Social Responsibility (CSR) and BRSR Reporting",
+          "Green Finance and Responsible Investment",
+        ],
+      },
+      {
+        name: "Drafting, Pleadings and Appearances",
+        code: "GROUP-1 P2",
+        color: "#8b5cf6",
+        icon: "FileEdit",
+        defaultChapters: [
+          "General Principles of Drafting Deeds & Documents",
+          "Drafting of Commercial Contracts, Agreements and Charters",
+          "Drafting Pleadings, Petitions, Appeals and Applications",
+          "Appearances before NCLT, NCLAT, CCI, SAT and High Courts",
+        ],
+      },
+      {
+        name: "Strategic Management & Corporate Finance",
+        code: "GROUP-2 P3",
+        color: "#3b82f6",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Strategic Planning and Business Environment Analysis",
+          "Corporate Finance & Raising Capital in Domestic and Global Markets",
+          "Private Equity, Venture Capital and IPO Valuation",
+        ],
+      },
+      {
+        name: "Corporate Restructuring, Valuation & Insolvency",
+        code: "GROUP-2 P4",
+        color: "#f59e0b",
+        icon: "Layers",
+        defaultChapters: [
+          "Mergers, Amalgamations, Demergers and Compromise Schemes",
+          "Business and Share Valuation Methods",
+          "Insolvency and Bankruptcy Code (IBC) 2016 - CIRP Process",
+          "Liquidation Process & Voluntary Winding Up",
+        ],
+      },
+    ],
+  },
+
+  // --- Undergraduate: B.Com, BBA, BCA, BA ---
+  {
+    id: "b-com",
+    name: "B.Com",
+    category: "Undergraduate",
+    description: "Bachelor of Commerce Degree Programme",
+    examBody: "UGC / State & Central Universities",
+    syllabusVersion: "NEP 2020 / UGC Model CBCS Curriculum",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Financial Accounting",
+        code: "BC-101",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Accounting Concepts and Accounting Standards",
+          "Business Income Determination",
+          "Financial Statements of Not-for-Profit",
+          "Consignment and Joint Ventures",
+          "Hire Purchase and Installment Systems",
+          "Branch and Departmental Accounts",
+        ],
+      },
+      {
+        name: "Business Law",
+        code: "BC-102",
+        color: "#8b5cf6",
+        icon: "Scale",
+        defaultChapters: [
+          "Indian Contract Act, 1872",
+          "Special Contracts: Indemnity, Guarantee, Bailment, Pledge",
+          "Sale of Goods Act, 1930",
+          "Negotiable Instruments Act, 1881",
+          "Consumer Protection Act, 2019",
+        ],
+      },
+      {
+        name: "Corporate Accounting",
+        code: "BC-201",
+        color: "#3b82f6",
+        icon: "Building2",
+        defaultChapters: [
+          "Accounting for Share Capital & Debentures",
+          "Redemption of Preference Shares and Debentures",
+          "Final Accounts of Companies",
+          "Valuation of Goodwill and Shares",
+          "Amalgamation and Internal Reconstruction",
+        ],
+      },
+      {
+        name: "Income Tax Law & Practice",
+        code: "BC-202",
+        color: "#ef4444",
+        icon: "Receipt",
+        defaultChapters: [
+          "Basic Concepts & Residential Status",
+          "Salaries & Income from House Property",
+          "Profits and Gains of Business or Profession",
+          "Capital Gains & Income from Other Sources",
+          "Deductions and Tax Liability Computation",
+        ],
+      },
+      {
+        name: "Cost and Management Accounting",
+        code: "BC-301",
+        color: "#10b981",
+        icon: "PieChart",
+        defaultChapters: [
+          "Cost Sheet and Cost Concepts",
+          "Material & Labor Cost Control",
+          "Overhead Absorption",
+          "Marginal Costing and Break-Even Analysis",
+          "Standard Costing & Variance Analysis",
+          "Budgetary Control",
+        ],
+      },
+    ],
+  },
+  {
+    id: "bba",
+    name: "BBA",
+    category: "Undergraduate",
+    description: "Bachelor of Business Administration Degree Programme",
+    examBody: "UGC / AICTE Approved Universities",
+    syllabusVersion: "NEP 2020 / UGC Model CBCS Curriculum",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Principles of Management",
+        code: "BBA-101",
+        color: "#6366f1",
+        icon: "Briefcase",
+        defaultChapters: [
+          "Evolution of Management Thought",
+          "Planning and Strategic Goal Setting",
+          "Organizational Structures and Design",
+          "Staffing and Human Resource Planning",
+          "Directing, Motivation and Leadership",
+          "Control Mechanisms and Quality Management",
+        ],
+      },
+      {
+        name: "Marketing Management",
+        code: "BBA-102",
+        color: "#f59e0b",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Marketing Environment and Customer Value",
+          "Market Segmentation, Targeting and Positioning (STP)",
+          "Product Life Cycle and Brand Management",
+          "Pricing Strategies and Channel Distribution",
+          "Integrated Marketing Communications and Digital Ads",
+        ],
+      },
+      {
+        name: "Business Economics",
+        code: "BBA-201",
+        color: "#10b981",
+        icon: "BarChart3",
+        defaultChapters: [
+          "Demand Elasticity and Forecasting",
+          "Production Functions and Cost Curves",
+          "Market Structures (Monopoly, Oligopoly, Perfect Competition)",
+          "Macroeconomic Indicators: GDP, Inflation, Fiscal Policy",
+        ],
+      },
+      {
+        name: "Human Resource Management",
+        code: "BBA-202",
+        color: "#8b5cf6",
+        icon: "Users",
+        defaultChapters: [
+          "Job Analysis, Recruitment and Selection",
+          "Training and Employee Development",
+          "Performance Appraisal Systems",
+          "Compensation Management and Incentives",
+          "Industrial Relations and Employee Grievances",
+        ],
+      },
+      {
+        name: "Financial Management",
+        code: "BBA-301",
+        color: "#3b82f6",
+        icon: "Calculator",
+        defaultChapters: [
+          "Time Value of Money and Ratio Analysis",
+          "Cost of Capital and Capital Structure",
+          "Capital Budgeting Techniques (NPV, IRR)",
+          "Working Capital and Cash Management",
+          "Dividend Policies",
+        ],
+      },
+    ],
+  },
+  {
+    id: "bca",
+    name: "BCA",
+    category: "Undergraduate",
+    description: "Bachelor of Computer Applications Programme",
+    examBody: "UGC / AICTE Approved Universities",
+    syllabusVersion: "NEP 2020 / UGC Model Curriculum",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Data Structures & Algorithms",
+        code: "BCA-201",
+        color: "#6366f1",
+        icon: "Code",
+        defaultChapters: [
+          "Asymptotic Notation & Time Complexity",
+          "Arrays, Linked Lists, Stacks and Queues",
+          "Binary Trees, BST & AVL Self-Balancing Trees",
+          "Graph Algorithms: BFS, DFS, Dijkstra, Prim & Kruskal",
+          "Sorting & Searching Algorithms (Quick, Merge, Heap)",
+          "Dynamic Programming Foundations",
+        ],
+      },
+      {
+        name: "Database Management Systems (DBMS)",
+        code: "BCA-202",
+        color: "#10b981",
+        icon: "Database",
+        defaultChapters: [
+          "DBMS Architecture & Relational Model",
+          "SQL Queries, Joins, Subqueries and Views",
+          "Database Normalization (1NF, 2NF, 3NF, BCNF)",
+          "Transaction Processing & ACID Properties",
+          "Concurrency Control & Lock-Based Protocols",
+          "Indexing & B/B+ Trees",
+        ],
+      },
+      {
+        name: "Operating Systems",
+        code: "BCA-301",
+        color: "#8b5cf6",
+        icon: "Cpu",
+        defaultChapters: [
+          "Operating System Structures & System Calls",
+          "Process Management & CPU Scheduling Algorithms",
+          "Process Synchronization, Semaphores & Deadlocks",
+          "Memory Management & Virtual Memory Paging",
+          "File Systems & Disk Scheduling (SCAN, C-LOOK)",
+        ],
+      },
+      {
+        name: "Computer Networks",
+        code: "BCA-302",
+        color: "#3b82f6",
+        icon: "Network",
+        defaultChapters: [
+          "OSI Model & TCP/IP Architecture",
+          "Data Link Layer Protocols, Framing and Error Control",
+          "Network Layer: IP Addressing, Subnetting & Routing",
+          "Transport Layer: TCP vs UDP, Congestion Control",
+          "Application Layer: DNS, HTTP, SMTP, FTP",
+        ],
+      },
+      {
+        name: "Web Development Technologies",
+        code: "BCA-401",
+        color: "#f59e0b",
+        icon: "Globe",
+        defaultChapters: [
+          "HTML5 Semantic Tags & CSS3 Flexbox/Grid",
+          "JavaScript ES6+, DOM Manipulation and Async/Await",
+          "React Fundamentals: Components, State, Hooks",
+          "Node.js & Express RESTful API Development",
+          "Authentication, JWT and Security Best Practices",
+        ],
+      },
+    ],
+  },
+  {
+    id: "ba",
+    name: "BA",
+    category: "Undergraduate",
+    description: "Bachelor of Arts Programme",
+    examBody: "UGC / Central & State Universities",
+    syllabusVersion: "NEP 2020 / UGC Model Curriculum",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Political Science",
+        code: "BA-POL",
+        color: "#6366f1",
+        icon: "Landmark",
+        defaultChapters: [
+          "Political Theory: Liberty, Equality, Justice, Rights",
+          "Indian Constitution: Fundamental Rights & Duties",
+          "Parliament, Judiciary and Executive Powers",
+          "Comparative Politics & Political Systems",
+          "International Relations and Global Governance",
+        ],
+      },
+      {
+        name: "Economics",
+        code: "BA-ECO",
+        color: "#10b981",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Microeconomics: Consumer Behavior and Market Equilibrium",
+          "Macroeconomics: National Income, Inflation and Employment",
+          "Public Economics: Taxation and Government Budgeting",
+          "Development Economics and Growth Models",
+        ],
+      },
+      {
+        name: "History",
+        code: "BA-HIS",
+        color: "#f59e0b",
+        icon: "Clock",
+        defaultChapters: [
+          "Ancient Indian History: Harappan Civilization & Vedic Period",
+          "Medieval History: Delhi Sultanate and Mughal Empire",
+          "Modern Indian History: Colonial Rule and Freedom Struggle",
+          "World History: Industrial Revolution and World Wars",
+        ],
+      },
+      {
+        name: "Sociology",
+        code: "BA-SOC",
+        color: "#8b5cf6",
+        icon: "Users",
+        defaultChapters: [
+          "Sociological Concepts: Social Structure and Institutions",
+          "Social Stratification: Caste, Class, Gender",
+          "Social Change, Urbanization and Modernization",
+          "Research Methods in Social Sciences",
+        ],
+      },
+    ],
+  },
+
+  // --- School: Class 10 & Class 12 ---
+  {
+    id: "class-10",
+    name: "Class 10",
+    category: "School",
+    description: "Secondary School Board Examination",
+    examBody: "CBSE / ICSE / State Secondary Education Boards",
+    syllabusVersion: "NCERT / CBSE Curriculum 2024-2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Mathematics",
+        code: "MATH-10",
+        color: "#6366f1",
+        icon: "Calculator",
+        defaultChapters: [
+          "Real Numbers & Fundamental Theorem of Arithmetic",
+          "Polynomials & Zeros",
+          "Pair of Linear Equations in Two Variables",
+          "Quadratic Equations",
+          "Arithmetic Progressions (AP)",
+          "Triangles & Coordinate Geometry",
+          "Introduction to Trigonometry & Heights and Distances",
+          "Circles, Areas Related to Circles",
+          "Surface Areas and Volumes",
+          "Statistics & Probability",
+        ],
+      },
+      {
+        name: "Science",
+        code: "SCI-10",
+        color: "#10b981",
+        icon: "Zap",
+        defaultChapters: [
+          "Chemical Reactions and Equations",
+          "Acids, Bases and Salts",
+          "Metals and Non-metals",
+          "Carbon and its Compounds",
+          "Life Processes (Nutrition, Respiration, Circulation, Excretion)",
+          "Control and Coordination in Organisms",
+          "How do Organisms Reproduce & Heredity",
+          "Light - Reflection and Refraction",
+          "The Human Eye and the Colorful World",
+          "Electricity & Magnetic Effects of Electric Current",
+          "Our Environment",
+        ],
+      },
+      {
+        name: "Social Science",
+        code: "SST-10",
+        color: "#f59e0b",
+        icon: "Globe",
+        defaultChapters: [
+          "The Rise of Nationalism in Europe & India",
+          "Resources and Development & Agriculture",
+          "Water Resources, Minerals and Energy Resources",
+          "Power Sharing & Federalism",
+          "Gender, Religion and Caste in Politics",
+          "Development, Sectors of Indian Economy, Money & Credit",
+        ],
+      },
+      {
+        name: "English",
+        code: "ENG-10",
+        color: "#8b5cf6",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Reading Comprehension Skills",
+          "Analytical Paragraph & Formal Letter Writing",
+          "Grammar: Tenses, Modals, Reported Speech",
+          "First Flight Prose & Poetry Interpretations",
+          "Footprints Without Feet Supplementary Reader",
+        ],
+      },
+    ],
+  },
+  {
+    id: "class-12",
+    name: "Class 12",
+    category: "School",
+    description: "Senior Secondary Board Examination (Commerce / Science / Arts)",
+    examBody: "CBSE / ISC / State Higher Secondary Boards",
+    syllabusVersion: "NCERT / CBSE Curriculum 2024-2026",
+    isVerified: true,
+    subjects: [
+      {
+        name: "Accountancy",
+        code: "ACC-12",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: [
+          "Accounting for Partnership: Goodwill, Admission, Retirement",
+          "Dissolution of Partnership Firm",
+          "Accounting for Share Capital & Debentures",
+          "Financial Statements Analysis & Ratio Analysis",
+          "Cash Flow Statement (AS 3)",
+        ],
+      },
+      {
+        name: "Business Studies",
+        code: "BST-12",
+        color: "#f59e0b",
+        icon: "Briefcase",
+        defaultChapters: [
+          "Nature and Significance of Management & Principles",
+          "Business Environment Analysis",
+          "Planning, Organizing, Staffing, Directing, Controlling",
+          "Financial Management & Financial Markets",
+          "Marketing Management & Consumer Protection",
+        ],
+      },
+      {
+        name: "Economics",
+        code: "ECO-12",
+        color: "#10b981",
+        icon: "TrendingUp",
+        defaultChapters: [
+          "Macro: National Income and Related Aggregates",
+          "Macro: Money and Banking",
+          "Macro: Determination of Income and Employment",
+          "Macro: Government Budget and Balance of Payments",
+          "Indian Economic Development: Policies 1947-1990 & 1991 Reforms",
+          "Current Challenges: Poverty, Human Capital, Rural Development",
+        ],
+      },
+      {
+        name: "Mathematics",
+        code: "MATH-12",
+        color: "#3b82f6",
+        icon: "Calculator",
+        defaultChapters: [
+          "Relations and Functions, Inverse Trigonometric Functions",
+          "Matrices and Determinants",
+          "Continuity, Differentiability & Derivatives Applications",
+          "Integrals & Applications of the Integrals",
+          "Differential Equations",
+          "Vectors and Three Dimensional Geometry (3D)",
+          "Linear Programming & Probability",
+        ],
+      },
+      {
+        name: "Physics",
+        code: "PHY-12",
+        color: "#8b5cf6",
+        icon: "Zap",
+        defaultChapters: [
+          "Electrostatics: Electric Charges and Potential",
+          "Current Electricity & Moving Charges",
+          "Electromagnetic Induction and Alternating Currents",
+          "Optics: Ray Optics and Wave Optics",
+          "Dual Nature of Radiation and Matter, Atoms & Nuclei",
+          "Semiconductor Electronics",
+        ],
+      },
+    ],
+  },
+
+  // --- Other ---
+  {
+    id: "other",
+    name: "Other Custom Course",
+    category: "Other",
+    description: "Create a fully personalized curriculum with your own subjects and chapters",
+    examBody: "Custom / Self-Paced Institution",
+    syllabusVersion: "Student Custom Syllabus",
+    isVerified: false,
+    subjects: [
+      {
+        name: "Major Subject 1",
+        code: "SUB-01",
+        color: "#6366f1",
+        icon: "BookOpen",
+        defaultChapters: ["Core Concepts Part 1", "Intermediate Modules", "Final Revision"],
+      },
+      {
+        name: "Major Subject 2",
+        code: "SUB-02",
+        color: "#8b5cf6",
+        icon: "BookOpen",
+        defaultChapters: ["Module 1 Fundamentals", "Applied Topics", "Problem Sets"],
+      },
+    ],
+  },
+];
+
+export function getCourseById(id: string): CourseDefinition | undefined {
+  return COURSE_CATALOG.find((c) => c.id === id);
+}
+
+export function getCourseByName(name: string): CourseDefinition | undefined {
+  if (!name) return undefined;
+  const lower = name.toLowerCase().trim();
+  return COURSE_CATALOG.find(
+    (c) =>
+      c.name.toLowerCase() === lower ||
+      c.id.toLowerCase() === lower ||
+      c.name.toLowerCase().includes(lower) ||
+      lower.includes(c.name.toLowerCase())
+  );
+}
+
+export function getCourseSyllabusInfo(courseNameOrId: string): {
+  examBody: string;
+  syllabusVersion: string;
+  isVerified: boolean;
+} {
+  const course = getCourseByName(courseNameOrId) || getCourseById(courseNameOrId);
+  if (course) {
+    return {
+      examBody: course.examBody,
+      syllabusVersion: course.syllabusVersion,
+      isVerified: course.isVerified,
+    };
+  }
+  return {
+    examBody: "Custom / Unverified",
+    syllabusVersion: "User Defined",
+    isVerified: false,
+  };
+}
+
+export function findSubjectInCatalog(courseNameOrId: string, subjectNameOrCode: string) {
+  const course = getCourseByName(courseNameOrId) || getCourseById(courseNameOrId);
+  if (!course) return undefined;
+  const sLower = subjectNameOrCode.toLowerCase().trim();
+  return course.subjects.find(
+    (s) =>
+      s.name.toLowerCase() === sLower ||
+      s.code.toLowerCase() === sLower ||
+      s.name.toLowerCase().includes(sLower)
+  );
+}
