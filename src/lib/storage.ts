@@ -30,6 +30,12 @@ import {
   ExamReadinessAnalysis,
   ChapterNature,
   Difficulty,
+  ExamAttemptRecord,
+  ExemptionRecord,
+  FlashcardItem,
+  StudentDoubtItem,
+  SleepDistractionLog,
+  CareerProgressRecord,
 } from "@/types/database";
 import { ReadinessEngine } from "@/lib/readinessEngine";
 import { CS_EXECUTIVE_OFFICIAL_CURRICULUM } from "@/lib/csExecutiveCurriculum";
@@ -1543,5 +1549,248 @@ export const StorageRepository = {
       chaptersTotal: updatedChapters.length,
       logs,
     };
+  },
+
+  // Exam Attempts (Feature 26, 101, 102, 103)
+  getExamAttempts(userId?: string): ExamAttemptRecord[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<ExamAttemptRecord[]>(this.getUserKey("exam_attempts"), [
+        {
+          id: "att-dec-2025",
+          student_id: GUEST_STUDENT.id,
+          attempt_label: "December 2025 Attempt (Group 1)",
+          exam_body: "ICSI CS Executive",
+          registration_number: "240981726/12/2024",
+          roll_number: "419822",
+          total_marks: 218,
+          max_marks: 400,
+          percentage: 54.5,
+          status: "Passed",
+          marks_breakdown: [
+            { subject_code: "JIGL", subject_name: "Jurisprudence, Interpretation & General Laws", marks_obtained: 54, max_marks: 100, passed: true, is_exemption: false },
+            { subject_code: "CLP", subject_name: "Company Law & Practice", marks_obtained: 62, max_marks: 100, passed: true, is_exemption: true },
+            { subject_code: "SBIL", subject_name: "Setting Up of Business, Industrial & Labour Laws", marks_obtained: 51, max_marks: 100, passed: true, is_exemption: false },
+            { subject_code: "CAFM", subject_name: "Corporate Accounting & Financial Management", marks_obtained: 51, max_marks: 100, passed: true, is_exemption: false },
+          ],
+          created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
+        },
+      ]);
+    }
+    return getJson<ExamAttemptRecord[]>(this.getUserKey("exam_attempts", userId), []);
+  },
+  saveExamAttempt(attempt: ExamAttemptRecord, userId?: string): void {
+    const list = this.getExamAttempts(userId);
+    const existingIdx = list.findIndex((a) => a.id === attempt.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = attempt;
+    } else {
+      list.unshift(attempt);
+    }
+    setJson(this.getUserKey("exam_attempts", userId), list);
+  },
+
+  // Exemptions (Feature 28, 105)
+  getExemptions(userId?: string): ExemptionRecord[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<ExemptionRecord[]>(this.getUserKey("exemptions"), [
+        {
+          id: "exm-1",
+          student_id: GUEST_STUDENT.id,
+          subject_code: "CLP",
+          subject_name: "Company Law & Practice",
+          marks_secured: 62,
+          secured_in_attempt: "December 2025",
+          valid_until_attempt: "June 2028 (3 consecutive attempts)",
+          is_active: true,
+        },
+      ]);
+    }
+    return getJson<ExemptionRecord[]>(this.getUserKey("exemptions", userId), []);
+  },
+  saveExemption(exemption: ExemptionRecord, userId?: string): void {
+    const list = this.getExemptions(userId);
+    const existingIdx = list.findIndex((e) => e.id === exemption.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = exemption;
+    } else {
+      list.push(exemption);
+    }
+    setJson(this.getUserKey("exemptions", userId), list);
+  },
+
+  // Flashcards (Feature 46, 47)
+  getFlashcards(userId?: string): FlashcardItem[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<FlashcardItem[]>(this.getUserKey("flashcards"), [
+        {
+          id: "fc-1",
+          student_id: GUEST_STUDENT.id,
+          subject_name: "Company Law & Practice",
+          chapter_title: "General Meetings",
+          front: "What is the statutory quorum for a Public Company AGM?",
+          back: "Up to 1000 members: 5 members personally present. 1000 to 5000 members: 15 members personally present. Exceeding 5000 members: 30 members personally present. (Section 103, Companies Act 2013)",
+          mastery_level: "reviewing",
+          last_reviewed_at: new Date().toISOString(),
+        },
+        {
+          id: "fc-2",
+          student_id: GUEST_STUDENT.id,
+          subject_name: "Jurisprudence, Interpretation & General Laws",
+          chapter_title: "Sources of Law",
+          front: "What are the essential elements of a valid Custom in Indian Jurisprudence?",
+          back: "Immemorial antiquity, certainty, reasonableness, continuity, peaceable enjoyment, and consistency with statutory enactments.",
+          mastery_level: "learning",
+          last_reviewed_at: new Date(Date.now() - 86400000).toISOString(),
+        },
+        {
+          id: "fc-3",
+          student_id: GUEST_STUDENT.id,
+          subject_name: "Tax Laws & Practice",
+          chapter_title: "Basic Concepts & Basis of Charge",
+          front: "Under what conditions is a person considered Ordinarily Resident (ROR) in India?",
+          back: "Must satisfy at least 1 basic condition under Sec 6(1) AND both additional conditions: Resident in India for at least 2 out of 10 preceding PYs, AND physically present for 730 days or more during 7 preceding PYs.",
+          mastery_level: "mastered",
+          last_reviewed_at: new Date().toISOString(),
+        },
+      ]);
+    }
+    return getJson<FlashcardItem[]>(this.getUserKey("flashcards", userId), []);
+  },
+  saveFlashcard(card: FlashcardItem, userId?: string): void {
+    const list = this.getFlashcards(userId);
+    const existingIdx = list.findIndex((c) => c.id === card.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = card;
+    } else {
+      list.unshift(card);
+    }
+    setJson(this.getUserKey("flashcards", userId), list);
+  },
+  deleteFlashcard(cardId: string, userId?: string): void {
+    const list = this.getFlashcards(userId).filter((c) => c.id !== cardId);
+    setJson(this.getUserKey("flashcards", userId), list);
+  },
+
+  // Doubts (Feature 55, 86)
+  getDoubts(userId?: string): StudentDoubtItem[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<StudentDoubtItem[]>(this.getUserKey("doubts"), [
+        {
+          id: "dbt-1",
+          student_id: GUEST_STUDENT.id,
+          subject_name: "Corporate Accounting & Financial Management",
+          chapter_title: "Cash Flow Statement",
+          question: "How are interim dividends and final proposed dividends differentiated in Cash Flow financing vs operating activities under AS 3?",
+          status: "clarified",
+          resolution_notes: "Interim dividend paid during the year is an outflow under Financing Activities. It is also added back to net profit in Operating Activities to find operating profit before working capital adjustments.",
+          created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+        },
+        {
+          id: "dbt-2",
+          student_id: GUEST_STUDENT.id,
+          subject_name: "Company Law & Practice",
+          chapter_title: "Board of Directors",
+          question: "Can an Additional Director appointed under Section 161(1) continue if the AGM is adjourned?",
+          status: "open",
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ]);
+    }
+    return getJson<StudentDoubtItem[]>(this.getUserKey("doubts", userId), []);
+  },
+  saveDoubt(doubt: StudentDoubtItem, userId?: string): void {
+    const list = this.getDoubts(userId);
+    const existingIdx = list.findIndex((d) => d.id === doubt.id);
+    if (existingIdx >= 0) {
+      list[existingIdx] = doubt;
+    } else {
+      list.unshift(doubt);
+    }
+    setJson(this.getUserKey("doubts", userId), list);
+  },
+  updateDoubtStatus(doubtId: string, status: "open" | "clarified", resolution?: string, userId?: string): void {
+    const list = this.getDoubts(userId);
+    const item = list.find((d) => d.id === doubtId);
+    if (item) {
+      item.status = status;
+      if (resolution) item.resolution_notes = resolution;
+      setJson(this.getUserKey("doubts", userId), list);
+    }
+  },
+
+  // Productivity & Sleep (Features 71-76)
+  getSleepDistractionLogs(userId?: string): SleepDistractionLog[] {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<SleepDistractionLog[]>(this.getUserKey("sleep_distraction_logs"), [
+        {
+          id: "log-1",
+          student_id: GUEST_STUDENT.id,
+          date: new Date().toISOString().split("T")[0],
+          sleep_hours: 7.5,
+          break_duration_minutes: 45,
+          distraction_duration_minutes: 25,
+          top_distractions: ["Social Media notifications", "Unscheduled phone call"],
+          focus_score: 88,
+          reflection_notes: "Strong focus during the morning company law revision block.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    }
+    return getJson<SleepDistractionLog[]>(this.getUserKey("sleep_distraction_logs", userId), []);
+  },
+  saveSleepDistractionLog(log: SleepDistractionLog, userId?: string): void {
+    const list = this.getSleepDistractionLogs(userId);
+    const existingIdx = list.findIndex((l) => l.date === log.date);
+    if (existingIdx >= 0) {
+      list[existingIdx] = log;
+    } else {
+      list.unshift(log);
+    }
+    setJson(this.getUserKey("sleep_distraction_logs", userId), list);
+  },
+
+  // Career Progress (Features 106-110)
+  getCareerProgress(userId?: string): CareerProgressRecord {
+    const session = this.getActiveSession();
+    if (session?.isGuest) {
+      return getJson<CareerProgressRecord>(this.getUserKey("career_progress"), {
+        id: "c-rec-guest",
+        student_id: GUEST_STUDENT.id,
+        course_stage: "CS Executive Stage (Passed Group 1, preparing Group 2)",
+        internship_status: "ongoing",
+        firm_name: "Apex Corporate Advisory LLP, New Delhi",
+        internship_start_date: "2025-08-01",
+        internship_end_date: "2027-02-01",
+        total_training_days_completed: 180,
+        certifications: [
+          "ICSI Pre-Examination Test Qualified",
+          "One Day Orientation Programme (ODOP)",
+          "Advanced Excel for Financial Modeling",
+        ],
+        target_job_roles: ["Company Secretary", "Corporate Governance Officer", "Legal Compliance Manager"],
+        placement_applications: [
+          { company_name: "Tata Consultancy Services (Legal Cell)", role: "Management Trainee - Compliance", applied_date: "2026-03-01", status: "shortlisted" },
+          { company_name: "Deloitte India", role: "Tax & Secretarial Advisory Analyst", applied_date: "2026-02-15", status: "interview" },
+        ],
+      });
+    }
+    return getJson<CareerProgressRecord>(this.getUserKey("career_progress", userId), {
+      id: "c-rec-" + (userId || "default"),
+      student_id: userId || "",
+      course_stage: "Professional Examination Candidate",
+      internship_status: "not_started",
+      total_training_days_completed: 0,
+      certifications: [],
+      target_job_roles: [],
+      placement_applications: [],
+    });
+  },
+  saveCareerProgress(record: CareerProgressRecord, userId?: string): void {
+    setJson(this.getUserKey("career_progress", userId), record);
   },
 };

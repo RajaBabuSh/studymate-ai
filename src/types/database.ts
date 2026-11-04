@@ -50,6 +50,9 @@ export interface Student {
   grade_or_year: string;
   target_exam: string;
   upcoming_exam_date?: string;
+  registration_number?: string;
+  exam_attempt?: string; // e.g. "Attempt 1 (First Attempt)", "Attempt 2"
+  admit_card_available?: boolean;
   daily_available_hours: number;
   preferred_study_time: PreferredStudyTime;
   break_duration_minutes: number;
@@ -122,6 +125,7 @@ export interface Chapter {
   nature?: ChapterNature;
   length_category?: ChapterLength;
   exam_importance?: ExamImportance;
+  weak_category?: "red" | "yellow" | "green";
   importance_notes?: string;
   practice_target?: string;
   is_custom?: boolean;
@@ -618,4 +622,173 @@ export interface SupportChatMessage {
   suggested_actions?: Array<{ label: string; action_id: string; target_url?: string }>;
   timestamp: string;
   page_context?: string;
+}
+
+// ==========================================
+// Complete 110-Feature Academic & Career Types
+// ==========================================
+
+export interface ExamAttemptRecord {
+  id: string;
+  student_id: string;
+  attempt_label: string; // e.g. "December 2025 Attempt"
+  exam_body: string;
+  registration_number: string;
+  roll_number?: string;
+  total_marks: number;
+  max_marks: number;
+  percentage: number;
+  status: "Passed" | "Failed" | "Exemption Secured";
+  marks_breakdown: Array<{
+    subject_code: string;
+    subject_name: string;
+    marks_obtained: number;
+    max_marks: number;
+    passed: boolean;
+    is_exemption: boolean;
+  }>;
+  created_at: string;
+}
+
+export interface ExamCentreInfo {
+  centre_name: string;
+  centre_code: string;
+  address: string;
+  city: string;
+  reporting_time: string;
+  gate_closing_time: string;
+  admit_card_available: boolean;
+  admit_card_url?: string;
+  instructions: string[];
+}
+
+export interface ExemptionRecord {
+  id: string;
+  student_id: string;
+  subject_code: string;
+  subject_name: string;
+  marks_secured: number;
+  secured_in_attempt: string;
+  valid_until_attempt: string;
+  is_active: boolean;
+}
+
+export interface FlashcardItem {
+  id: string;
+  student_id: string;
+  subject_name: string;
+  chapter_title: string;
+  front: string;
+  back: string;
+  mastery_level: "learning" | "reviewing" | "mastered";
+  last_reviewed_at?: string;
+}
+
+export interface CaseLawRecord {
+  id: string;
+  student_id?: string;
+  subject_name: string;
+  case_name: string;
+  citation?: string;
+  core_principle: string;
+  judgment_summary: string;
+  exam_relevance: "high" | "medium";
+}
+
+export interface SectionProvisionRecord {
+  id: string;
+  student_id?: string;
+  subject_name: string;
+  act_name: string;
+  section_number: string;
+  title: string;
+  provisions: string;
+  key_exceptions?: string;
+}
+
+export interface FormulaBankItem {
+  id: string;
+  student_id?: string;
+  subject_name: string;
+  chapter_title: string;
+  formula_name: string;
+  expression: string;
+  explanation: string;
+  application_example?: string;
+}
+
+export interface StudentDoubtItem {
+  id: string;
+  student_id: string;
+  subject_name: string;
+  chapter_title: string;
+  question: string;
+  status: "open" | "clarified";
+  resolution_notes?: string;
+  created_at: string;
+}
+
+export interface SleepDistractionLog {
+  id: string;
+  student_id: string;
+  date: string;
+  sleep_hours: number;
+  break_duration_minutes: number;
+  distraction_duration_minutes: number;
+  top_distractions: string[];
+  focus_score: number;
+  reflection_notes?: string;
+  created_at: string;
+}
+
+export interface PYQLibraryItem {
+  id: string;
+  course: string;
+  subject_name: string;
+  year: string;
+  paper_code: string;
+  has_suggested_answers: boolean;
+  download_url?: string;
+  solution_highlights?: string;
+}
+
+export interface FacultyMentorItem {
+  id: string;
+  name: string;
+  subject_expertise: string;
+  qualification: string;
+  contact_email: string;
+  office_hours: string;
+  bio: string;
+}
+
+export interface PeerStudyGroupItem {
+  id: string;
+  title: string;
+  course: string;
+  subject_focus: string;
+  member_count: number;
+  meeting_schedule: string;
+  is_joined: boolean;
+  channel_link?: string;
+}
+
+export interface CareerProgressRecord {
+  id: string;
+  student_id: string;
+  course_stage: string;
+  internship_status: "not_started" | "ongoing" | "completed";
+  firm_name?: string;
+  internship_start_date?: string;
+  internship_end_date?: string;
+  total_training_days_completed: number;
+  certifications: string[];
+  resume_url?: string;
+  target_job_roles: string[];
+  placement_applications: Array<{
+    company_name: string;
+    role: string;
+    applied_date: string;
+    status: "applied" | "shortlisted" | "interview" | "selected" | "closed";
+  }>;
 }
