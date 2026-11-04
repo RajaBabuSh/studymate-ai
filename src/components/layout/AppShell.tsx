@@ -7,6 +7,30 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import SupportAssistantModal from "@/components/support/SupportAssistantModal";
+import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
+import { cn } from "@/lib/utils";
+
+function StudentDashboardShell({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-purple-500 selection:text-white">
+      <Sidebar />
+      <div
+        className={cn(
+          "flex flex-col min-h-screen transition-all duration-300 ease-in-out",
+          isCollapsed ? "md:pl-20" : "md:pl-64"
+        )}
+      >
+        <Navbar />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">
+          {children}
+        </main>
+      </div>
+      <SupportAssistantModal />
+    </div>
+  );
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -64,34 +88,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Loading state for protected routes
   if (isLoading && !isPublicRoute) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white">
-        <Loader2 className="h-8 w-8 text-indigo-500 animate-spin mb-3" />
-        <p className="text-xs text-slate-400">Loading student workspace...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800">
+        <Loader2 className="h-8 w-8 text-purple-600 animate-spin mb-3" />
+        <p className="text-xs font-semibold text-slate-600">Loading student workspace...</p>
       </div>
     );
   }
 
   // Public Landing / Auth pages
   if (isPublicRoute) {
-    return <main className="min-h-screen bg-slate-50 dark:bg-slate-950">{children}</main>;
+    return <main className="min-h-screen bg-slate-50">{children}</main>;
   }
 
   // Onboarding wizard page (standalone focused layout without main sidebar)
   if (isOnboardingRoute) {
-    return <main className="min-h-screen bg-slate-950 text-white">{children}</main>;
+    return <main className="min-h-screen bg-slate-50 text-slate-900">{children}</main>;
   }
 
-  // Protected student dashboard & modules
+  // Protected student dashboard & modules with dynamic sidebar state
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
-      <Sidebar />
-      <div className="flex flex-col md:pl-64 min-h-screen">
-        <Navbar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">
-          {children}
-        </main>
-      </div>
-      <SupportAssistantModal />
-    </div>
+    <SidebarProvider>
+      <StudentDashboardShell>{children}</StudentDashboardShell>
+    </SidebarProvider>
   );
 }
