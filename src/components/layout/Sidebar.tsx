@@ -10,7 +10,6 @@ import {
   BookOpen,
   Award,
   Zap,
-  HelpCircle,
   Briefcase,
   Settings,
   LogOut,
@@ -51,11 +50,6 @@ const NAV_ITEMS = [
     name: "Productivity",
     href: "/productivity",
     icon: Zap,
-  },
-  {
-    name: "Resources & Support",
-    href: "/resources",
-    icon: HelpCircle,
   },
   {
     name: "Career & Results",

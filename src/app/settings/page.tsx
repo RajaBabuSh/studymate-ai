@@ -15,8 +15,6 @@ import {
   Save,
   CheckCircle2,
   Sparkles,
-  Sun,
-  Moon,
   Palette,
 } from "lucide-react";
 
@@ -35,7 +33,7 @@ const STANDARD_COURSES = [
 export default function SettingsPage() {
   const router = useRouter();
   const { user, student, isGuest, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -140,74 +138,16 @@ export default function SettingsPage() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* THEME & APPEARANCE PREFERENCES                                */}
+      {/* THEME & APPEARANCE ARCHITECTURE                               */}
       {/* ------------------------------------------------------------- */}
       <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 transition-colors">
         <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1.5">
           <Palette className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-          <span>Theme & Visual Display</span>
+          <span>Interface Appearance</span>
         </h2>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mb-4 font-medium">
-          Choose your preferred interface theme. Selected theme is saved permanently in your browser.
+        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+          StudyMate AI supports seamless Light and Dark modes. Toggle instantly anytime using the theme switch button in the top navigation bar. Active mode: <strong className="text-purple-600 dark:text-purple-400 capitalize">{theme} Mode</strong>.
         </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Light Mode Option */}
-          <button
-            type="button"
-            onClick={() => setTheme("light")}
-            className={`flex items-center gap-4 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-              theme === "light"
-                ? "border-purple-600 bg-purple-50/70 shadow-sm ring-2 ring-purple-600/20"
-                : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-850 dark:hover:border-slate-700"
-            }`}
-          >
-            <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-900/60">
-              <Sun className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-900 dark:text-white">Light Mode</span>
-                {theme === "light" && (
-                  <span className="text-[10px] font-extrabold uppercase bg-purple-600 text-white px-2 py-0.2 rounded-full">
-                    Active
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                Clean white background with rich purple and blue accents.
-              </p>
-            </div>
-          </button>
-
-          {/* Dark Mode Option */}
-          <button
-            type="button"
-            onClick={() => setTheme("dark")}
-            className={`flex items-center gap-4 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
-              theme === "dark"
-                ? "border-purple-500 bg-purple-950/40 shadow-sm ring-2 ring-purple-500/30"
-                : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-850 dark:hover:border-slate-700"
-            }`}
-          >
-            <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-purple-400 shrink-0 border border-slate-700">
-              <Moon className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-900 dark:text-white">Dark Mode</span>
-                {theme === "dark" && (
-                  <span className="text-[10px] font-extrabold uppercase bg-purple-600 text-white px-2 py-0.2 rounded-full">
-                    Active
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                Deep slate background with clear high-contrast text and accents.
-              </p>
-            </div>
-          </button>
-        </div>
       </div>
 
       {/* ------------------------------------------------------------- */}

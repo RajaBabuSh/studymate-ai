@@ -98,54 +98,81 @@ export default function SupportAssistantModal() {
       sender: "student",
       text: query,
       timestamp: new Date().toISOString(),
-      page_context: pathname,
     };
 
     StorageRepository.saveSupportChatMessage(studentMsg, user?.id);
-    const updatedMessages = [...messages, studentMsg];
-    setMessages(updatedMessages);
+    setMessages((prev) => [...prev, studentMsg]);
     setInputValue("");
     setIsTyping(true);
 
+    // Provide context-aware AI response based on StudyMate platform features
     setTimeout(() => {
-      const response = generateAssistantResponse(query, pathname, student?.course);
-      const assistantMsg: SupportChatMessage = {
-        id: `msg-asst-${Date.now()}`,
+      let replyText = "";
+      let suggestedActions: SupportChatMessage["suggested_actions"] = [];
+
+      const lowerQ = query.toLowerCase();
+
+      if (lowerQ.includes("readiness") || lowerQ.includes("score")) {
+        replyText =
+          "Your Exam Readiness Index synthesizes syllabus completion percentage, average practice test score, and consistency streak days into a holistic 0-100 metric.";
+        suggestedActions = [
+          { label: "Take Practice Test", action_id: "open_tests" },
+          { label: "Check Weak Chapters", action_id: "open_academic" },
+        ];
+      } else if (lowerQ.includes("course") || lowerQ.includes("degree")) {
+        replyText = `Your active enrolled degree is ${student?.course || "CS Executive"}. You can switch to any other course (CA, B.Com, BBA, BCA, or Other) anytime in Settings.`;
+        suggestedActions = [{ label: "Open Settings", action_id: "open_settings" }];
+      } else if (lowerQ.includes("timetable") || lowerQ.includes("schedule")) {
+        replyText =
+          "The timetable allocates high-difficulty numerical topics to your peak morning slots and places rapid active-recall revision in the evening.";
+        suggestedActions = [{ label: "Study Planner", action_id: "open_planner" }];
+      } else if (lowerQ.includes("issue") || lowerQ.includes("bug") || lowerQ.includes("error")) {
+        replyText =
+          "I can log a direct support ticket for our engineering and academic team. Please click below to log a priority ticket.";
+        suggestedActions = [{ label: "Create Support Ticket", action_id: "create_ticket" }];
+      } else {
+        replyText = `Here to assist you with ${student?.course || "your curriculum"}. Explore your Planner for daily sessions, or log a ticket if you need faculty assistance.`;
+        suggestedActions = [
+          { label: "View Planner", action_id: "open_planner" },
+          { label: "Log Ticket", action_id: "create_ticket" },
+        ];
+      }
+
+      const botMsg: SupportChatMessage = {
+        id: `msg-bot-${Date.now()}`,
         sender: "assistant",
-        text: response.text,
-        suggested_actions: response.actions,
+        text: replyText,
         timestamp: new Date().toISOString(),
-        page_context: pathname,
+        suggested_actions: suggestedActions,
       };
 
-      StorageRepository.saveSupportChatMessage(assistantMsg, user?.id);
-      setMessages([...updatedMessages, assistantMsg]);
+      StorageRepository.saveSupportChatMessage(botMsg, user?.id);
+      setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
-    }, 600);
+    }, 700);
   };
 
   const handleCreateTicket = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ticketSubject || !ticketMessage) return;
+    if (!ticketSubject.trim() || !ticketMessage.trim()) return;
 
     const newTicket: SupportTicket = {
-      id: `ticket-${Date.now().toString(36)}`,
+      id: `tkt-${Date.now().toString().slice(-5)}`,
       student_id: user?.id || "guest",
       student_email: user?.email || student?.email || "student@studymate.ai",
-      subject: ticketSubject,
-      message: ticketMessage,
+      subject: ticketSubject.trim(),
       category: ticketCategory,
-      status: "open",
       priority: ticketPriority,
+      message: ticketMessage.trim(),
+      status: "open",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
     StorageRepository.saveSupportTicket(newTicket, user?.id);
-    const updated = StorageRepository.getSupportTickets(user?.id);
-    setMyTickets(updated);
+    setMyTickets((prev) => [newTicket, ...prev]);
 
-    // Also add confirmation to chat
+    // Send confirmation in chat
     const confirmMsg: SupportChatMessage = {
       id: `msg-tkt-${Date.now()}`,
       sender: "system",
@@ -167,49 +194,49 @@ export default function SupportAssistantModal() {
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 px-4 py-3 text-xs font-bold text-white shadow-2xl shadow-violet-900/40 hover:scale-105 active:scale-95 transition-all"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 px-4 py-3 text-xs font-bold text-white shadow-2xl shadow-purple-900/40 hover:scale-105 active:scale-95 transition-all cursor-pointer"
         title="Open StudyMate Academic Support Assistant"
       >
-        <Sparkles className="h-4 w-4 animate-pulse text-violet-200" />
+        <Sparkles className="h-4 w-4 animate-pulse text-purple-200" />
         <span className="hidden sm:inline">Support Assistant</span>
       </button>
 
       {/* Modal Dialog */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[95vw] sm:w-[420px] h-[550px] max-h-[85vh] rounded-3xl border border-slate-700 bg-[#0b0f19] text-white shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-[95vw] sm:w-[420px] h-[550px] max-h-[85vh] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0b0f19] text-slate-900 dark:text-white shadow-2xl flex flex-col overflow-hidden animate-slide-up transition-colors">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 bg-[#070a13] px-5 py-3.5">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070a13] px-5 py-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white shadow-md">
                 <LifeBuoy className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span>StudyMate Support Assistant</span>
-                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-bold text-emerald-400 border border-emerald-500/20">
+                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     Online
                   </span>
                 </h3>
-                <p className="text-[10px] text-slate-400">Context: {pathname}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Context: {pathname}</p>
               </div>
             </div>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="rounded-lg p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
           {/* Sub Navigation */}
-          <div className="flex items-center border-b border-slate-800 bg-slate-900/60 text-xs px-3">
+          <div className="flex items-center border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-900/60 text-xs px-3">
             <button
               onClick={() => setActiveTab("chat")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition ${
+              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition cursor-pointer ${
                 activeTab === "chat"
-                  ? "border-violet-500 text-violet-300"
-                  : "border-transparent text-slate-400 hover:text-white"
+                  ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-300"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <MessageSquare className="h-3.5 w-3.5" />
@@ -217,10 +244,10 @@ export default function SupportAssistantModal() {
             </button>
             <button
               onClick={() => setActiveTab("ticket")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition ${
+              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition cursor-pointer ${
                 activeTab === "ticket"
-                  ? "border-violet-500 text-violet-300"
-                  : "border-transparent text-slate-400 hover:text-white"
+                  ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-300"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Ticket className="h-3.5 w-3.5" />
@@ -228,10 +255,10 @@ export default function SupportAssistantModal() {
             </button>
             <button
               onClick={() => setActiveTab("my_tickets")}
-              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition ${
+              className={`flex items-center gap-1.5 py-2.5 px-3 font-semibold border-b-2 transition cursor-pointer ${
                 activeTab === "my_tickets"
-                  ? "border-violet-500 text-violet-300"
-                  : "border-transparent text-slate-400 hover:text-white"
+                  ? "border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-300"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <span>Tickets ({myTickets.length})</span>
@@ -240,10 +267,10 @@ export default function SupportAssistantModal() {
 
           {/* Tab 1: AI Chat */}
           {activeTab === "chat" && (
-            <div className="flex-1 flex flex-col min-h-0 bg-[#0b0f19]">
+            <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-[#0b0f19]">
               {ticketSuccess && (
-                <div className="m-3 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                <div className="m-3 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span>{ticketSuccess}</span>
                 </div>
               )}
@@ -258,10 +285,10 @@ export default function SupportAssistantModal() {
                     return (
                       <div
                         key={m.id}
-                        className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-2.5 text-violet-200 text-[11px]"
+                        className="rounded-xl border border-purple-200 bg-purple-50 text-purple-900 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-200 p-2.5 text-[11px]"
                       >
                         <div className="flex items-start gap-2">
-                          <ShieldCheck className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                          <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
                           <span>{m.text}</span>
                         </div>
                       </div>
@@ -276,8 +303,8 @@ export default function SupportAssistantModal() {
                       <div
                         className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] leading-relaxed ${
                           isUser
-                            ? "bg-violet-600 text-white rounded-br-xs"
-                            : "bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-xs"
+                            ? "bg-purple-600 text-white rounded-br-xs"
+                            : "bg-slate-100 border border-slate-200 text-slate-800 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-200 rounded-bl-xs"
                         }`}
                       >
                         <p>{m.text}</p>
@@ -296,7 +323,7 @@ export default function SupportAssistantModal() {
                                   handleSendMessage(act.label);
                                 }
                               }}
-                              className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] font-semibold text-violet-300 hover:bg-violet-500/20 transition flex items-center gap-1"
+                              className="rounded-lg border border-purple-200 bg-purple-50 dark:border-purple-500/40 dark:bg-purple-500/10 px-2 py-1 text-[10px] font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition flex items-center gap-1 cursor-pointer"
                             >
                               <span>{act.label}</span>
                               <ChevronRight className="h-2.5 w-2.5" />
@@ -316,10 +343,10 @@ export default function SupportAssistantModal() {
                 })}
 
                 {isTyping && (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-slate-900/60 p-2 rounded-xl w-36">
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce delay-100" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce delay-200" />
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/60 p-2 rounded-xl w-36">
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-bounce" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-bounce delay-100" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-bounce delay-200" />
                     <span className="text-[10px] ml-1">Analyzing...</span>
                   </div>
                 )}
@@ -327,12 +354,12 @@ export default function SupportAssistantModal() {
               </div>
 
               {/* Context Prompt Shortcuts */}
-              <div className="border-t border-slate-800 bg-[#070a13] p-2 overflow-x-auto flex gap-1.5 scrollbar-none">
+              <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070a13] p-2 overflow-x-auto flex gap-1.5 scrollbar-none">
                 {currentPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(prompt)}
-                    className="shrink-0 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1 text-[10px] font-medium text-slate-300 hover:border-violet-500/40 hover:text-white transition"
+                    className="shrink-0 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1 text-[10px] font-medium text-slate-700 dark:text-slate-300 hover:border-purple-400 hover:text-purple-700 dark:hover:text-white transition cursor-pointer"
                   >
                     {prompt}
                   </button>
@@ -340,18 +367,18 @@ export default function SupportAssistantModal() {
               </div>
 
               {/* Input Bar */}
-              <div className="p-3 border-t border-slate-800 bg-[#070a13] flex items-center gap-2">
+              <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#070a13] flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Ask a question or report an issue..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+                  className="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-purple-500"
                 />
                 <button
                   onClick={() => handleSendMessage()}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white hover:bg-violet-500 transition shrink-0"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-white hover:bg-purple-500 transition shrink-0 cursor-pointer"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </button>
@@ -361,23 +388,23 @@ export default function SupportAssistantModal() {
 
           {/* Tab 2: Create Support Ticket */}
           {activeTab === "ticket" && (
-            <div className="flex-1 overflow-y-auto p-5 bg-[#0b0f19] text-xs space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 bg-white dark:bg-[#0b0f19] text-xs space-y-4">
               <div>
-                <h4 className="font-bold text-white text-sm">Submit Administrator Support Ticket</h4>
-                <p className="text-slate-400 text-[11px] mt-0.5">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Submit Administrator Support Ticket</h4>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">
                   Have an issue with curriculum, dates, or application errors? Our administration team will review and resolve your request.
                 </p>
               </div>
 
               <form onSubmit={handleCreateTicket} className="space-y-3.5">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Issue Category</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Issue Category</label>
                   <select
                     value={ticketCategory}
                     onChange={(e) =>
                       setTicketCategory(e.target.value as SupportTicket["category"])
                     }
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none focus:border-violet-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
                   >
                     <option value="curriculum">Curriculum / Missing Chapters</option>
                     <option value="timetable">AI Timetable & Scheduling</option>
@@ -388,13 +415,13 @@ export default function SupportAssistantModal() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Priority</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Priority</label>
                   <select
                     value={ticketPriority}
                     onChange={(e) =>
                       setTicketPriority(e.target.value as SupportTicket["priority"])
                     }
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none focus:border-violet-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
                   >
                     <option value="low">Low - General query</option>
                     <option value="medium">Medium - Guidance required</option>
@@ -404,26 +431,26 @@ export default function SupportAssistantModal() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Subject / Headline</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Subject / Headline</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Need to adjust chapter count for Paper 2"
                     value={ticketSubject}
                     onChange={(e) => setTicketSubject(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none focus:border-violet-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Detailed Explanation</label>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Detailed Explanation</label>
                   <textarea
                     rows={4}
                     required
                     placeholder="Describe what occurred, your target course, and how we can assist..."
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-white focus:outline-none focus:border-violet-500 resize-none"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 resize-none"
                   />
                 </div>
 
@@ -431,13 +458,13 @@ export default function SupportAssistantModal() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("chat")}
-                    className="rounded-xl border border-slate-700 px-3.5 py-2 text-slate-300"
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                   >
                     Back to Chat
                   </button>
                   <button
                     type="submit"
-                    className="rounded-xl bg-violet-600 px-4 py-2 font-bold text-white hover:bg-violet-500 transition"
+                    className="rounded-xl bg-purple-600 px-4 py-2 font-bold text-white hover:bg-purple-500 transition cursor-pointer"
                   >
                     Submit Ticket
                   </button>
@@ -448,54 +475,46 @@ export default function SupportAssistantModal() {
 
           {/* Tab 3: My Tickets History */}
           {activeTab === "my_tickets" && (
-            <div className="flex-1 overflow-y-auto p-4 bg-[#0b0f19] text-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="font-bold text-white text-xs">Logged Support Tickets</span>
-                <span className="text-[10px] text-slate-500 font-mono">
-                  {myTickets.length} records
-                </span>
+            <div className="flex-1 overflow-y-auto p-5 bg-white dark:bg-[#0b0f19] text-xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <h4 className="font-bold text-slate-900 dark:text-white">Logged Tickets & Inquiries</h4>
+                <button
+                  onClick={() => setActiveTab("ticket")}
+                  className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                >
+                  + New Ticket
+                </button>
               </div>
 
               {myTickets.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">
+                <div className="text-center py-12 text-slate-400">
                   <Ticket className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>You have not logged any support tickets yet.</p>
+                  <p>No support tickets logged yet.</p>
                 </div>
               ) : (
-                myTickets.map((tkt) => (
+                myTickets.map((t) => (
                   <div
-                    key={tkt.id}
-                    className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 space-y-2"
+                    key={t.id}
+                    className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-3.5 space-y-1.5"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <h5 className="font-bold text-white text-xs">{tkt.subject}</h5>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">{t.subject}</span>
                       <span
-                        className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                          tkt.status === "resolved"
-                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                            : tkt.status === "in_progress"
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                          t.status === "resolved"
+                            ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                            : t.status === "in_progress"
+                            ? "bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30"
+                            : "bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30"
                         }`}
                       >
-                        {tkt.status}
+                        {t.status}
                       </span>
                     </div>
-
-                    <p className="text-[11px] text-slate-300 line-clamp-2">{tkt.message}</p>
-
-                    {tkt.admin_response && (
-                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-[11px] text-emerald-200">
-                        <span className="font-bold text-emerald-400 block mb-0.5">
-                          Administrator Response:
-                        </span>
-                        <p>{tkt.admin_response}</p>
-                      </div>
-                    )}
-
-                    <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 font-mono">
-                      <span>Category: {tkt.category}</span>
-                      <span>{new Date(tkt.created_at).toLocaleDateString()}</span>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">{t.message}</p>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800/80">
+                      <span>Category: {t.category}</span>
+                      <span>{new Date(t.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                 ))
@@ -506,97 +525,4 @@ export default function SupportAssistantModal() {
       )}
     </>
   );
-}
-
-/**
- * Intelligent Academic Guidance Knowledge Base
- */
-function generateAssistantResponse(
-  query: string,
-  pathname: string,
-  studentCourse?: string
-): { text: string; actions?: Array<{ label: string; action_id: string; target_url?: string }> } {
-  const q = query.toLowerCase();
-
-  if (q.includes("readiness") || q.includes("score") || q.includes("calculated")) {
-    return {
-      text: "Your Exam Readiness score uses a transparent multi-factor algorithm: Syllabus Completion (30%) + Revision Milestones (25%) + Test Marks (25%) + Test Coverage (10%) + Timeline Buffer (10%). It does not rely on arbitrary guesses. You can boost readiness by completing Chapter Practice Tests and logging Revision 1 & 2 milestones.",
-      actions: [
-        { label: "View Chapter Tracker", action_id: "nav_subjects", target_url: "/subjects" },
-        { label: "Take a Practice Test", action_id: "nav_tests", target_url: "/tests" },
-      ],
-    };
-  }
-
-  if (q.includes("revision") || q.includes("milestone") || q.includes("revised")) {
-    return {
-      text: "StudyMate AI enforces independent tracking: completing a chapter's first study does NOT automatically mark it revised! Go to 'Chapter Intelligence' (/subjects), click '+ Log Revision', and select whether you completed Revision 1 (rapid concept recap) or Revision 2 (deep problem practice).",
-      actions: [
-        { label: "Open Chapter Intelligence", action_id: "nav_subjects", target_url: "/subjects" },
-      ],
-    };
-  }
-
-  if (q.includes("test") || q.includes("coverage") || q.includes("marks")) {
-    return {
-      text: "Test Coverage is the percentage of chapters where you have taken at least one test. Test Performance is your average percentage score across all completed tests. You can generate numerical drills, MCQs, or case studies on the Smart Tests page (/tests).",
-      actions: [
-        { label: "Generate Smart Test", action_id: "nav_tests", target_url: "/tests" },
-      ],
-    };
-  }
-
-  if (q.includes("numerical") || q.includes("theory") || q.includes("morning")) {
-    return {
-      text: "Numerical chapters (like Accounting, Taxation PGBP, Costing) demand high analytical focus and are scheduled in morning peak alertness slots. Theory chapters (like Company Law, Auditing) receive structured active recall, short markdown notes, and 3-day spaced recall slots.",
-      actions: [
-        { label: "View Subject Strategies", action_id: "nav_subjects", target_url: "/subjects" },
-      ],
-    };
-  }
-
-  if (q.includes("regenerate") || q.includes("timetable") || q.includes("keep") || q.includes("approved")) {
-    return {
-      text: "On the AI Timetable generator (/timetable), you can regenerate your schedule anytime. When regenerating, toggle 'Keep Existing Completed Sessions' so your already studied slots remain intact. The AI will then distribute the remaining chapters without conflicts.",
-      actions: [
-        { label: "Open Timetable Generator", action_id: "nav_timetable", target_url: "/timetable" },
-      ],
-    };
-  }
-
-  if (q.includes("red warning") || q.includes("warning") || q.includes("error")) {
-    return {
-      text: "A RED warning is triggered if your daily study workload exceeds your available hours (preventing burnout), or if an upcoming examination lacks a mock test or sufficient revision checkpoints. You can choose 'Accept AI Correction' or 'Keep My Existing Plan'.",
-      actions: [
-        { label: "Check Exam Planner", action_id: "nav_planner", target_url: "/exam-planner" },
-      ],
-    };
-  }
-
-  if (q.includes("custom") || q.includes("add chapter") || q.includes("upload")) {
-    return {
-      text: "Students can add their own personalized custom chapters without altering the official curriculum! In 'Chapter Intelligence' (/subjects), click '+ Add Custom Chapter'. You can also upload a syllabus photo or PDF to have the AI automatically extract and verify chapters.",
-      actions: [
-        { label: "Add Custom Chapter", action_id: "nav_subjects", target_url: "/subjects" },
-      ],
-    };
-  }
-
-  if (q.includes("ticket") || q.includes("contact") || q.includes("admin") || q.includes("help") || q.includes("issue")) {
-    return {
-      text: "If you are encountering a technical error or need curriculum changes approved, you can log a direct support ticket with our academic administrators using the 'Log Ticket' tab above.",
-      actions: [
-        { label: "Open Ticket Form", action_id: "create_ticket" },
-      ],
-    };
-  }
-
-  // Default context response
-  return {
-    text: `I'm here to support your ${studentCourse || "academic"} preparation journey! You can track chapter completion, schedule revisions, take diagnostic practice tests, or log an administrative support ticket anytime.`,
-    actions: [
-      { label: "How is Exam Readiness calculated?", action_id: "explain_readiness" },
-      { label: "Log an Issue Ticket", action_id: "create_ticket" },
-    ],
-  };
 }

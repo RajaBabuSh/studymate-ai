@@ -209,7 +209,7 @@ export default function Navbar() {
                   Study Reminders
                 </span>
                 <Link
-                  href="/resources"
+                  href="/planner"
                   onClick={() => setShowNotifications(false)}
                   className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:underline"
                 >
