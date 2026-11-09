@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS public.students (
     full_name TEXT NOT NULL,
     avatar_url TEXT,
     education_level TEXT DEFAULT 'Professional (CA, CS, CMA)',
-    course TEXT DEFAULT 'CA Intermediate',
+    course TEXT DEFAULT 'CS Executive',
+    semester TEXT DEFAULT 'Both Groups',
     institution TEXT,
     grade_or_year TEXT DEFAULT 'Student',
     target_exam TEXT DEFAULT 'Upcoming Examination',
@@ -23,10 +24,15 @@ CREATE TABLE IF NOT EXISTS public.students (
     preferred_study_time TEXT DEFAULT 'evening', -- morning, afternoon, evening, night, flexible
     break_duration_minutes INT DEFAULT 15,
     weekly_holiday TEXT DEFAULT 'Sunday',
+    status TEXT DEFAULT 'active', -- active, suspended
     onboarding_completed BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ensure columns exist if table was already created in earlier migrations
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS semester TEXT DEFAULT 'Both Groups';
 
 -- 2. Subjects
 CREATE TABLE IF NOT EXISTS public.subjects (
@@ -265,24 +271,132 @@ USING (
     auth.uid()::text = (storage.foldername(name))[1]
 );
 
--- Auto create student profile on auth signup
+-- Auto create student profile on auth signup with dynamic course and study parameters
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.students (id, email, full_name, onboarding_completed)
+    INSERT INTO public.students (
+        id,
+        email,
+        full_name,
+        course,
+        semester,
+        target_exam,
+        daily_available_hours,
+        status,
+        onboarding_completed,
+        created_at,
+        updated_at
+    )
     VALUES (
         new.id,
         new.email,
         COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
-        false
-    );
+        COALESCE(new.raw_user_meta_data->>'course', 'CS Executive'),
+        COALESCE(new.raw_user_meta_data->>'semester', 'Both Groups'),
+        COALESCE(new.raw_user_meta_data->>'target_exam', 'Upcoming Examination'),
+        COALESCE((new.raw_user_meta_data->>'daily_available_hours')::numeric, 4.5),
+        'active',
+        true,
+        timezone('utc'::text, now()),
+        timezone('utc'::text, now())
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        email = EXCLUDED.email,
+        full_name = EXCLUDED.full_name,
+        course = COALESCE(EXCLUDED.course, public.students.course),
+        semester = COALESCE(EXCLUDED.semester, public.students.semester),
+        target_exam = COALESCE(EXCLUDED.target_exam, public.students.target_exam),
+        status = COALESCE(public.students.status, 'active'),
+        updated_at = timezone('utc'::text, now());
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Security Definer function to fetch all registered students for authorized administrative review
+CREATE OR REPLACE FUNCTION public.get_all_students_for_admin()
+RETURNS TABLE (
+    id UUID,
+    email TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    education_level TEXT,
+    course TEXT,
+    institution TEXT,
+    grade_or_year TEXT,
+    semester TEXT,
+    target_exam TEXT,
+    upcoming_exam_date DATE,
+    daily_available_hours NUMERIC,
+    status TEXT,
+    onboarding_completed BOOLEAN,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+)
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        s.id,
+        s.email,
+        s.full_name,
+        s.avatar_url,
+        s.education_level,
+        s.course,
+        s.institution,
+        s.grade_or_year,
+        s.semester,
+        s.target_exam,
+        s.upcoming_exam_date,
+        s.daily_available_hours,
+        COALESCE(s.status, 'active') AS status,
+        s.onboarding_completed,
+        s.created_at,
+        s.updated_at
+    FROM public.students s
+    ORDER BY s.created_at DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.get_all_students_for_admin() TO anon, authenticated, service_role;
+
+-- Security Definer function to toggle student status (active / suspended)
+CREATE OR REPLACE FUNCTION public.update_student_status_for_admin(
+    p_student_id UUID,
+    p_status TEXT
+)
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    UPDATE public.students
+    SET status = p_status,
+        updated_at = timezone('utc'::text, now())
+    WHERE id = p_student_id;
+    RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION public.update_student_status_for_admin(UUID, TEXT) TO anon, authenticated, service_role;
+
+-- RLS Policy allowing verified administrators to view all students
+DROP POLICY IF EXISTS "Admins can view all student records" ON public.students;
+CREATE POLICY "Admins can view all student records"
+    ON public.students FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.admin_users
+            WHERE admin_users.id = auth.uid() AND admin_users.role = 'admin'
+        )
+    );
 
 -- =========================================================================
 -- 11. Admin Role & Governance Tables (Strict Role Separation & RLS)

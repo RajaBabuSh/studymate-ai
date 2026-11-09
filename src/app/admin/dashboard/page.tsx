@@ -67,6 +67,22 @@ export default function AdminDashboardPage() {
       totalVideos: allVideos.length || 18,
     });
 
+    // Also fetch live students from API to sync Supabase metrics
+    fetch("/api/admin/students")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.students)) {
+          const liveStudents = data.students;
+          const liveActive = liveStudents.filter((s: { status?: string }) => s.status !== "suspended").length;
+          setMetrics((prev) => ({
+            ...prev,
+            totalStudents: Math.max(prev.totalStudents, liveStudents.length),
+            activeStudents: Math.max(prev.activeStudents, liveActive),
+          }));
+        }
+      })
+      .catch(() => {});
+
     setAuditLogs(audit);
     setSettings(StorageRepository.getPlatformSettings());
   }, []);

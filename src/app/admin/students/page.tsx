@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import AdminAppShell from "@/components/admin/AdminAppShell";
 import { StorageRepository } from "@/lib/storage";
 import {
@@ -11,12 +11,14 @@ import {
   UserCheck,
   UserX,
   Calendar,
-  Clock,
-  Sparkles,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Users,
 } from "lucide-react";
 import { Student } from "@/types/database";
 
-interface StudentSummaryItem {
+interface StudentDisplayItem {
   student: Student;
   totalMinutesStudied: number;
   sessionsCount: number;
@@ -24,42 +26,162 @@ interface StudentSummaryItem {
 }
 
 export default function AdminStudentsPage() {
-  const [students, setStudents] = useState<StudentSummaryItem[]>([]);
+  const [students, setStudents] = useState<StudentDisplayItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const loadStudents = () => {
-    const list = StorageRepository.getAllStudentsSummary();
-    setStudents(list);
-  };
+  const fetchStudents = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-  useEffect(() => {
-    loadStudents();
+    try {
+      // 1. Fetch live students from backend API (connected to Supabase PostgreSQL)
+      const res = await fetch("/api/admin/students", {
+        method: "GET",
+        headers: { "Cache-Control": "no-cache" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Server responded with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      const apiStudents: Student[] = data.students || [];
+
+      // 2. Correlate with local metrics (study time, sessions, timetables) if available
+      const localSummaries = StorageRepository.getAllStudentsSummary();
+      const localMetricsMap = new Map<string, { minutes: number; sessions: number; timetable: boolean }>();
+
+      localSummaries.forEach((item) => {
+        const key = (item.student.email || item.student.id || "").toLowerCase();
+        localMetricsMap.set(key, {
+          minutes: item.totalMinutesStudied,
+          sessions: item.sessionsCount,
+          timetable: item.timetableCreated,
+        });
+      });
+
+      const displayList: StudentDisplayItem[] = apiStudents.map((s) => {
+        const key = (s.email || s.id || "").toLowerCase();
+        const metrics = localMetricsMap.get(key);
+        return {
+          student: s,
+          totalMinutesStudied: metrics ? metrics.minutes : 0,
+          sessionsCount: metrics ? metrics.sessions : 0,
+          timetableCreated: metrics ? metrics.timetable : false,
+        };
+      });
+
+      setStudents(displayList);
+    } catch (err: unknown) {
+      console.error("Failed to load students:", err);
+      // Fallback to local storage if API call fails
+      try {
+        const local = StorageRepository.getAllStudentsSummary();
+        if (local.length > 0) {
+          setStudents(local);
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to load students from database.");
+        }
+      } catch {
+        setError(err instanceof Error ? err.message : "Failed to load students from database.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleToggleStatus = (studentId: string, currentStatus?: string) => {
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  const handleToggleStatus = async (studentId: string, currentStatus?: string) => {
     const nextStatus = currentStatus === "suspended" ? "active" : "suspended";
-    const ok = StorageRepository.toggleStudentStatus(studentId, nextStatus);
-    if (ok) {
+    setUpdatingId(studentId);
+
+    try {
+      // 1. Send update to API to persist change in Supabase PostgreSQL
+      const res = await fetch("/api/admin/students", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, status: nextStatus }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update account status on server.");
+      }
+
+      // 2. Update local state optimistically
+      setStudents((prev) =>
+        prev.map((item) =>
+          item.student.id === studentId
+            ? { ...item, student: { ...item.student, status: nextStatus } }
+            : item
+        )
+      );
+
+      // Also sync local storage
+      StorageRepository.toggleStudentStatus(studentId, nextStatus);
+
       setFeedbackMessage(`Student account status updated to ${nextStatus}.`);
-      loadStudents();
       setTimeout(() => setFeedbackMessage(null), 3500);
+    } catch (err: unknown) {
+      console.error("Error updating student status:", err);
+      // Fallback: local toggle
+      StorageRepository.toggleStudentStatus(studentId, nextStatus);
+      setStudents((prev) =>
+        prev.map((item) =>
+          item.student.id === studentId
+            ? { ...item, student: { ...item.student, status: nextStatus } }
+            : item
+        )
+      );
+      setFeedbackMessage(`Account updated locally to ${nextStatus}.`);
+      setTimeout(() => setFeedbackMessage(null), 3500);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const filteredStudents = students.filter((item) => {
     const matchesSearch =
-      item.student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.student.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.student.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.student.email || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCourse =
       selectedCourse === "all" || item.student.course === selectedCourse;
-    return matchesSearch && matchesCourse;
+    const matchesStatus =
+      selectedStatus === "all" ||
+      (selectedStatus === "active" && item.student.status !== "suspended") ||
+      (selectedStatus === "suspended" && item.student.status === "suspended");
+
+    return matchesSearch && matchesCourse && matchesStatus;
   });
 
   const availableCourses = Array.from(
     new Set(students.map((s) => s.student.course).filter(Boolean))
   );
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Recent";
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "Recent";
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Recent";
+    }
+  };
 
   return (
     <AdminAppShell pageTitle="Student Directory & Account Governance">
@@ -76,24 +198,41 @@ export default function AdminStudentsPage() {
               </h3>
               <p className="mt-0.5 text-xs text-purple-800/80 dark:text-purple-300/80 leading-relaxed">
                 Administrative access is restricted to academic metadata, course enrollment, target
-                examination dates, and account status. Personal student study notes, private
-                markdown files, and uploaded document attachments remain strictly private and
-                isolated from administrator inspection.
+                examination dates, registration timestamps, and account status. Personal student study notes,
+                uploaded private files, and password credentials remain securely encrypted and isolated.
               </p>
             </div>
           </div>
         </div>
 
+        {/* Feedback Banner */}
         {feedbackMessage && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/40 px-4 py-3 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/40 px-4 py-3 text-xs text-emerald-800 dark:text-emerald-300 font-medium animate-fade-in">
+            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{feedbackMessage}</span>
           </div>
         )}
 
+        {/* Error Banner */}
+        {error && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/40 px-4 py-3 text-xs text-rose-800 dark:text-rose-300 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={() => fetchStudents()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/60 dark:hover:bg-rose-800 px-3 py-1 font-semibold text-rose-900 dark:text-rose-200 transition"
+            >
+              <RefreshCw className="h-3 w-3" />
+              <span>Retry</span>
+            </button>
+          </div>
+        )}
+
         {/* Filter & Search Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-80">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
               <Search className="h-4 w-4" />
             </div>
@@ -102,20 +241,21 @@ export default function AdminStudentsPage() {
               placeholder="Search by student name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 py-2 pl-10 pr-4 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-purple-500 focus:outline-none shadow-xs"
+              className="w-full rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 py-2.5 pl-10 pr-4 text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-purple-500 focus:outline-none shadow-xs"
             />
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Course Filter */}
             <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-600 dark:text-slate-300 shadow-xs">
               <Filter className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-semibold">Course:</span>
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Course:</span>
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 className="bg-transparent text-slate-900 dark:text-white font-semibold focus:outline-none cursor-pointer"
               >
-                <option value="all" className="dark:bg-slate-800">All Enrolled Courses</option>
+                <option value="all" className="dark:bg-slate-800">All Courses ({students.length})</option>
                 {availableCourses.map((c) => (
                   <option key={c} value={c} className="dark:bg-slate-800">
                     {c}
@@ -123,58 +263,117 @@ export default function AdminStudentsPage() {
                 ))}
               </select>
             </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3.5 py-2 text-xs text-slate-600 dark:text-slate-300 shadow-xs">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Status:</span>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="bg-transparent text-slate-900 dark:text-white font-semibold focus:outline-none cursor-pointer"
+              >
+                <option value="all" className="dark:bg-slate-800">All Statuses</option>
+                <option value="active" className="dark:bg-slate-800">Active Only</option>
+                <option value="suspended" className="dark:bg-slate-800">Suspended Only</option>
+              </select>
+            </div>
+
+            {/* Refresh Button */}
+            <button
+              onClick={() => fetchStudents()}
+              disabled={isLoading}
+              title="Refresh database records"
+              className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs disabled:opacity-50 cursor-pointer"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-purple-600 dark:text-purple-400 ${isLoading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
           </div>
         </div>
 
         {/* Student Table */}
         <div className="rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-xs transition-colors">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider text-[11px]">
-                <tr>
-                  <th className="px-6 py-4">Student Profile</th>
-                  <th className="px-6 py-4">Enrolled Course</th>
-                  <th className="px-6 py-4">Target Examination</th>
-                  <th className="px-6 py-4">Study Volume</th>
-                  <th className="px-6 py-4">Timetable</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredStudents.length === 0 ? (
+          {isLoading ? (
+            /* Loading State */
+            <div className="py-20 text-center space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto" />
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                Loading registered student accounts from Supabase PostgreSQL...
+              </p>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            /* Empty State */
+            <div className="py-16 px-4 text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                {searchTerm || selectedCourse !== "all" || selectedStatus !== "all"
+                  ? "No matching student accounts found"
+                  : "No students registered yet"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                {searchTerm || selectedCourse !== "all" || selectedStatus !== "all"
+                  ? "Try adjusting your search terms or clearing course and status filters."
+                  : "When students create accounts on StudyMate AI, their profiles, enrollments, and statuses will appear here in real time."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider text-[11px]">
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-slate-400 dark:text-slate-500">
-                      No matching students found.
-                    </td>
+                    <th className="px-6 py-4">Student Profile</th>
+                    <th className="px-6 py-4">Enrolled Course</th>
+                    <th className="px-6 py-4">Target Examination</th>
+                    <th className="px-6 py-4">Registered Date</th>
+                    <th className="px-6 py-4">Account Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  filteredStudents.map(({ student, totalMinutesStudied, sessionsCount, timetableCreated }) => {
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredStudents.map(({ student }) => {
                     const isSuspended = student.status === "suspended";
+                    const isUpdating = updatingId === student.id;
+
                     return (
                       <tr key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                        {/* Student Name & Email */}
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-900">
-                              {student.full_name?.charAt(0) || "S"}
+                              {student.full_name?.charAt(0).toUpperCase() || "S"}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-900 dark:text-white">{student.full_name || "Enrolled Student"}</p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{student.email}</p>
+                              <p className="font-bold text-slate-900 dark:text-white">
+                                {student.full_name || "Enrolled Student"}
+                              </p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                                {student.email}
+                              </p>
                             </div>
                           </div>
                         </td>
 
+                        {/* Enrolled Course */}
                         <td className="px-6 py-4">
-                          <span className="rounded-md bg-purple-50 dark:bg-purple-950/60 px-2 py-1 text-[11px] font-semibold text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900">
-                            {student.course || "General Curriculum"}
-                          </span>
+                          <div className="space-y-0.5">
+                            <span className="inline-block rounded-md bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900">
+                              {student.course || "General Curriculum"}
+                            </span>
+                            {student.semester && (
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                                {student.semester}
+                              </p>
+                            )}
+                          </div>
                         </td>
 
+                        {/* Target Examination */}
                         <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-                            <span>{student.target_exam || "Scheduled"}</span>
+                            <span className="font-medium">{student.target_exam || "Scheduled Examination"}</span>
                           </div>
                           {student.upcoming_exam_date && (
                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
@@ -183,27 +382,12 @@ export default function AdminStudentsPage() {
                           )}
                         </td>
 
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                            <Clock className="h-3.5 w-3.5" />
-                            <span>{(totalMinutesStudied / 60).toFixed(1)} hrs</span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {sessionsCount} sessions logged
-                          </span>
+                        {/* Registration Date */}
+                        <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+                          {formatDate(student.created_at)}
                         </td>
 
-                        <td className="px-6 py-4">
-                          {timetableCreated ? (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
-                              <Sparkles className="h-3 w-3" />
-                              Generated
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500">Pending</span>
-                          )}
-                        </td>
-
+                        {/* Account Status */}
                         <td className="px-6 py-4">
                           <span
                             className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
@@ -216,16 +400,23 @@ export default function AdminStudentsPage() {
                           </span>
                         </td>
 
+                        {/* Actions */}
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleToggleStatus(student.id, student.status)}
-                            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
+                            disabled={isUpdating}
+                            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50 cursor-pointer ${
                               isSuspended
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900"
                                 : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-900"
                             }`}
                           >
-                            {isSuspended ? (
+                            {isUpdating ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>Updating...</span>
+                              </>
+                            ) : isSuspended ? (
                               <>
                                 <UserCheck className="h-3.5 w-3.5" />
                                 <span>Reactivate</span>
@@ -240,11 +431,11 @@ export default function AdminStudentsPage() {
                         </td>
                       </tr>
                     );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </AdminAppShell>
