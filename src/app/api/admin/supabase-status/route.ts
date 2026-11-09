@@ -29,7 +29,11 @@ export async function GET(req: NextRequest) {
   }
 
   let host: string | null = null;
+  let urlPrefix = "";
+  let urlSuffix = "";
   if (SUPABASE_URL) {
+    urlPrefix = SUPABASE_URL.slice(0, 10);
+    urlSuffix = SUPABASE_URL.slice(-12);
     try {
       const u = new URL(SUPABASE_URL);
       host = u.host;
@@ -41,6 +45,7 @@ export async function GET(req: NextRequest) {
   const statusReport = {
     configured: isServerSupabaseConfigured,
     hasUrl: Boolean(SUPABASE_URL),
+    urlFormatHint: SUPABASE_URL ? `${urlPrefix}...${urlSuffix} (len: ${SUPABASE_URL.length})` : "empty",
     hasAnonKey: Boolean(SUPABASE_ANON_KEY),
     hasServiceRoleKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
     supabaseHost: host,
