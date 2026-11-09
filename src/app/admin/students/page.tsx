@@ -15,6 +15,7 @@ import {
   AlertCircle,
   RefreshCw,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { Student } from "@/types/database";
 
@@ -25,8 +26,24 @@ interface StudentDisplayItem {
   timetableCreated: boolean;
 }
 
+const DEFAULT_COURSES = [
+  "CS Executive",
+  "CSEET",
+  "CS Professional",
+  "CA Foundation",
+  "CA Intermediate",
+  "CA Final",
+  "B.Com",
+  "BBA",
+  "BCA",
+];
+
 export default function AdminStudentsPage() {
   const [students, setStudents] = useState<StudentDisplayItem[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<string[]>(DEFAULT_COURSES);
+  const [databaseConnected, setDatabaseConnected] = useState<boolean>(true);
+  const [databaseConfigError, setDatabaseConfigError] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +57,7 @@ export default function AdminStudentsPage() {
     setError(null);
 
     try {
-      // 1. Fetch live students from backend API (connected to Supabase PostgreSQL)
+      // Fetch live students from backend API (connected to Supabase PostgreSQL)
       const res = await fetch("/api/admin/students", {
         method: "GET",
         headers: { "Cache-Control": "no-cache" },
@@ -54,7 +71,21 @@ export default function AdminStudentsPage() {
       const data = await res.json();
       const apiStudents: Student[] = data.students || [];
 
-      // 2. Correlate with local metrics (study time, sessions, timetables) if available
+      if (Array.isArray(data.courses) && data.courses.length > 0) {
+        setAvailableCourses(data.courses);
+      }
+
+      if (typeof data.databaseConnected === "boolean") {
+        setDatabaseConnected(data.databaseConnected);
+      }
+
+      if (data.databaseConfigError) {
+        setDatabaseConfigError(data.databaseConfigError);
+      } else {
+        setDatabaseConfigError(null);
+      }
+
+      // Correlate with local metrics (study time, sessions, timetables) if available
       const localSummaries = StorageRepository.getAllStudentsSummary();
       const localMetricsMap = new Map<string, { minutes: number; sessions: number; timetable: boolean }>();
 
@@ -81,7 +112,6 @@ export default function AdminStudentsPage() {
       setStudents(displayList);
     } catch (err: unknown) {
       console.error("Failed to load students:", err);
-      // Fallback to local storage if API call fails
       try {
         const local = StorageRepository.getAllStudentsSummary();
         if (local.length > 0) {
@@ -134,7 +164,6 @@ export default function AdminStudentsPage() {
       setTimeout(() => setFeedbackMessage(null), 3500);
     } catch (err: unknown) {
       console.error("Error updating student status:", err);
-      // Fallback: local toggle
       StorageRepository.toggleStudentStatus(studentId, nextStatus);
       setStudents((prev) =>
         prev.map((item) =>
@@ -164,10 +193,6 @@ export default function AdminStudentsPage() {
     return matchesSearch && matchesCourse && matchesStatus;
   });
 
-  const availableCourses = Array.from(
-    new Set(students.map((s) => s.student.course).filter(Boolean))
-  );
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Recent";
     try {
@@ -186,6 +211,37 @@ export default function AdminStudentsPage() {
   return (
     <AdminAppShell pageTitle="Student Directory & Account Governance">
       <div className="space-y-6">
+        {/* Supabase Disconnected Warning Banner */}
+        {!databaseConnected && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/40 p-4 transition-colors">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shrink-0 shadow-xs">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  Supabase Database Environment Variables Required on Vercel
+                </h3>
+                <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+                  {databaseConfigError ||
+                    "The admin portal is running in offline mode because database variables are missing in Vercel. Newly registered students from other devices will not sync until the following variables are set in your Vercel Project Settings:"}
+                </p>
+                <div className="pt-1.5 flex flex-wrap gap-2 text-[11px] font-mono">
+                  <span className="rounded-md bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 font-bold text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+                    NEXT_PUBLIC_SUPABASE_URL
+                  </span>
+                  <span className="rounded-md bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 font-bold text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+                    NEXT_PUBLIC_SUPABASE_ANON_KEY
+                  </span>
+                  <span className="rounded-md bg-amber-100 dark:bg-amber-900/80 px-2 py-0.5 font-bold text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+                    SUPABASE_SERVICE_ROLE_KEY
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Strict Student Privacy Banner */}
         <div className="rounded-2xl border border-purple-200 bg-purple-50/60 dark:border-purple-900/60 dark:bg-purple-950/40 p-4 transition-colors">
           <div className="flex items-start gap-3">

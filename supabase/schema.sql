@@ -226,8 +226,18 @@ ALTER TABLE public.study_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_videos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Students can view and manage their own profile"
-    ON public.students FOR ALL USING (auth.uid() = id);
+CREATE POLICY "Students can view their own profile"
+    ON public.students FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE POLICY "Students can update their own profile"
+    ON public.students FOR UPDATE
+    USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow student registration profile insert"
+    ON public.students FOR INSERT
+    WITH CHECK (true);
 
 CREATE POLICY "Students can manage their own subjects"
     ON public.subjects FOR ALL USING (auth.uid() = student_id);

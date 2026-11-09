@@ -1,13 +1,47 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
+/**
+ * Trims whitespace, removes enclosing quotes, and strips trailing slashes.
+ */
+function cleanEnv(val?: string | null): string {
+  if (!val) return "";
+  let trimmed = String(val).trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+  return trimmed.replace(/\/+$/, "");
+}
+
+// Support all standard Supabase environment variable aliases
+export const SUPABASE_URL = cleanEnv(
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_URL ||
+  process.env.SUPABASE_PROJECT_URL ||
+  process.env.POSTGRES_URL_NON_POOLING // Some Vercel integrations provide host
+);
+
+export const SUPABASE_SERVICE_ROLE_KEY = cleanEnv(
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE ||
+  process.env.SERVICE_ROLE_KEY
+);
+
+export const SUPABASE_ANON_KEY = cleanEnv(
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_KEY ||
+  process.env.SUPABASE_KEY
+);
 
 export const isServerSupabaseConfigured = Boolean(
-  supabaseUrl &&
-  !supabaseUrl.includes("your-project") &&
-  supabaseUrl.startsWith("https://")
+  SUPABASE_URL &&
+  !SUPABASE_URL.includes("your-project") &&
+  SUPABASE_URL.startsWith("https://")
 );
 
 /**
@@ -16,13 +50,20 @@ export const isServerSupabaseConfigured = Boolean(
  * Bypasses Row Level Security (RLS) safely on the server for admin APIs and auto-confirmation.
  */
 export function getSupabaseAdmin(): SupabaseClient | null {
-  if (!isServerSupabaseConfigured || !serviceRoleKey) return null;
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  if (!isServerSupabaseConfigured || !SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+  try {
+    return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  } catch (err) {
+    console.error("[SupabaseServer] Failed to create admin client:", err);
+    return null;
+  }
 }
 
 /**
@@ -31,12 +72,17 @@ export function getSupabaseAdmin(): SupabaseClient | null {
  */
 export function getSupabaseServerClient(): SupabaseClient | null {
   if (!isServerSupabaseConfigured) return null;
-  const key = serviceRoleKey || anonKey;
+  const key = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
   if (!key) return null;
-  return createClient(supabaseUrl, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  try {
+    return createClient(SUPABASE_URL, key, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  } catch (err) {
+    console.error("[SupabaseServer] Failed to create standard client:", err);
+    return null;
+  }
 }
