@@ -15,12 +15,24 @@ function cleanEnv(val?: string | null): string {
   return trimmed.replace(/\/+$/, "");
 }
 
+/**
+ * Ensures protocol is present and cleans URL.
+ */
+function cleanUrl(val?: string | null): string {
+  let cleaned = cleanEnv(val);
+  if (!cleaned) return "";
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = "https://" + cleaned;
+  }
+  return cleaned;
+}
+
 // Support all standard Supabase environment variable aliases
-export const SUPABASE_URL = cleanEnv(
+export const SUPABASE_URL = cleanUrl(
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
   process.env.SUPABASE_PROJECT_URL ||
-  process.env.POSTGRES_URL_NON_POOLING // Some Vercel integrations provide host
+  process.env.POSTGRES_URL_NON_POOLING
 );
 
 export const SUPABASE_SERVICE_ROLE_KEY = cleanEnv(

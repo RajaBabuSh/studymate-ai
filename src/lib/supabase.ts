@@ -12,7 +12,16 @@ function cleanEnv(val?: string | null): string {
   return trimmed.replace(/\/+$/, "");
 }
 
-const supabaseUrl = cleanEnv(
+function cleanUrl(val?: string | null): string {
+  let cleaned = cleanEnv(val);
+  if (!cleaned) return "";
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = "https://" + cleaned;
+  }
+  return cleaned;
+}
+
+const supabaseUrl = cleanUrl(
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL
 );

@@ -49,18 +49,24 @@ export async function GET(req: NextRequest) {
     totalAuthUsers: null as number | null,
     totalStudentProfiles: null as number | null,
     diagnosticMessages: [] as string[],
+    actionItems: [] as string[],
   };
 
   if (!isServerSupabaseConfigured) {
     statusReport.diagnosticMessages.push(
-      "NEXT_PUBLIC_SUPABASE_URL is missing or invalid in environment variables."
+      "NEXT_PUBLIC_SUPABASE_URL is missing, does not start with https://, or contains placeholder text."
     );
-    return NextResponse.json({ success: true, status: statusReport });
+    statusReport.actionItems.push(
+      "Add NEXT_PUBLIC_SUPABASE_URL in Vercel Project Settings > Environment Variables (e.g. https://xyz.supabase.co)."
+    );
   }
 
   if (!SUPABASE_SERVICE_ROLE_KEY) {
     statusReport.diagnosticMessages.push(
-      "SUPABASE_SERVICE_ROLE_KEY is missing. Admin bypass and auto-confirm will fall back to anon key."
+      "SUPABASE_SERVICE_ROLE_KEY is missing. Server cannot bypass RLS to read all students or auto-confirm signups."
+    );
+    statusReport.actionItems.push(
+      "Copy your service_role secret key from Supabase Dashboard (Settings > API > service_role) and add it as SUPABASE_SERVICE_ROLE_KEY in Vercel Environment Variables."
     );
   }
 
@@ -81,6 +87,9 @@ export async function GET(req: NextRequest) {
       } else {
         statusReport.diagnosticMessages.push(
           `public.students table check error: ${countErr.message}`
+        );
+        statusReport.actionItems.push(
+          "Run supabase/migrations/20261110_fix_student_sync.sql in your Supabase SQL Editor to create the required tables and columns."
         );
       }
 
