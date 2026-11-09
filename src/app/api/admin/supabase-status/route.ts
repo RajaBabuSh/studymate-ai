@@ -4,8 +4,9 @@ import {
   getSupabaseServerClient,
   isServerSupabaseConfigured,
   SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-  SUPABASE_ANON_KEY,
+  serverUrlValidation,
+  serviceRoleKeyValidation,
+  anonKeyValidation,
 } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -29,25 +30,29 @@ export async function GET(req: NextRequest) {
   }
 
   let host: string | null = null;
-  let urlPrefix = "";
-  let urlSuffix = "";
-  if (SUPABASE_URL) {
-    urlPrefix = SUPABASE_URL.slice(0, 10);
-    urlSuffix = SUPABASE_URL.slice(-12);
+  if (serverUrlValidation.isValid && SUPABASE_URL) {
     try {
       const u = new URL(SUPABASE_URL);
       host = u.host;
     } catch {
       host = "invalid-url";
     }
+  } else if (serverUrlValidation.errorType) {
+    host = `error-${serverUrlValidation.errorType.toLowerCase()}`;
   }
+
+  const rawUrlSet = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
 
   const statusReport = {
     configured: isServerSupabaseConfigured,
-    hasUrl: Boolean(SUPABASE_URL),
-    urlFormatHint: SUPABASE_URL ? `${urlPrefix}...${urlSuffix} (len: ${SUPABASE_URL.length})` : "empty",
-    hasAnonKey: Boolean(SUPABASE_ANON_KEY),
-    hasServiceRoleKey: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+    hasUrl: rawUrlSet,
+    urlValidation: {
+      isValid: serverUrlValidation.isValid,
+      projectRef: serverUrlValidation.projectRef,
+      errorType: serverUrlValidation.errorType,
+    },
+    hasAnonKey: anonKeyValidation.isValid,
+    hasServiceRoleKey: serviceRoleKeyValidation.isValid,
     supabaseHost: host,
     connectionWorking: false,
     tableExists: false,
@@ -57,18 +62,18 @@ export async function GET(req: NextRequest) {
     actionItems: [] as string[],
   };
 
-  if (!isServerSupabaseConfigured) {
+  if (!serverUrlValidation.isValid) {
     statusReport.diagnosticMessages.push(
-      "NEXT_PUBLIC_SUPABASE_URL is missing, does not start with https://, or contains placeholder text."
+      serverUrlValidation.errorMessage || "NEXT_PUBLIC_SUPABASE_URL is invalid."
     );
     statusReport.actionItems.push(
-      "Add NEXT_PUBLIC_SUPABASE_URL in Vercel Project Settings > Environment Variables (e.g. https://xyz.supabase.co)."
+      "Set NEXT_PUBLIC_SUPABASE_URL in Vercel Project Settings > Environment Variables. Expected format: https://YOUR_PROJECT_REF.supabase.co"
     );
   }
 
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
+  if (!serviceRoleKeyValidation.isValid) {
     statusReport.diagnosticMessages.push(
-      "SUPABASE_SERVICE_ROLE_KEY is missing. Server cannot bypass RLS to read all students or auto-confirm signups."
+      serviceRoleKeyValidation.errorMessage || "SUPABASE_SERVICE_ROLE_KEY is missing or invalid."
     );
     statusReport.actionItems.push(
       "Copy your service_role secret key from Supabase Dashboard (Settings > API > service_role) and add it as SUPABASE_SERVICE_ROLE_KEY in Vercel Environment Variables."
@@ -114,7 +119,7 @@ export async function GET(req: NextRequest) {
       }
     } catch (e: unknown) {
       statusReport.diagnosticMessages.push(
-        `Admin ping error: ${e instanceof Error ? e.message : String(e)}`
+        `Admin connection error: ${e instanceof Error ? e.message : String(e)}`
       );
     }
   } else {

@@ -3,6 +3,7 @@ import {
   getSupabaseAdmin,
   getSupabaseServerClient,
   isServerSupabaseConfigured,
+  serverConfigError,
 } from "@/lib/supabaseServer";
 import { StorageRepository } from "@/lib/storage";
 import { Student } from "@/types/database";
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
       courses: CATALOG_COURSES,
       databaseConnected: false,
       databaseConfigError:
+        serverConfigError ||
         "Supabase environment variables (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) are missing in Vercel Project Settings.",
     });
   }

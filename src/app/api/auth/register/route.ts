@@ -5,6 +5,7 @@ import {
   isServerSupabaseConfigured,
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
+  serverConfigError,
 } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "Production Database Error: Supabase cloud environment variables are missing on Vercel. Please add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to your Vercel Project Settings > Environment Variables.",
+              "Production Database Configuration Error: " +
+              (serverConfigError ||
+                "Supabase cloud environment variables are missing on Vercel. Please add NEXT_PUBLIC_SUPABASE_URL (format: https://YOUR_PROJECT_REF.supabase.co) and SUPABASE_SERVICE_ROLE_KEY to your Vercel Project Settings > Environment Variables."),
             databaseConfigured: false,
           },
           { status: 503 }

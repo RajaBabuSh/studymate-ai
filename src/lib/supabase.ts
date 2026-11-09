@@ -1,43 +1,66 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import {
+  validateSupabaseUrl,
+  validateSupabaseKey,
+  SupabaseUrlValidationResult,
+  SupabaseKeyValidationResult,
+} from "./supabaseConfig";
 
-function cleanEnv(val?: string | null): string {
-  if (!val) return "";
-  let trimmed = String(val).trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    trimmed = trimmed.slice(1, -1).trim();
-  }
-  return trimmed.replace(/\/+$/, "");
-}
-
-function cleanUrl(val?: string | null): string {
-  let cleaned = cleanEnv(val);
-  if (!cleaned) return "";
-  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
-    cleaned = "https://" + cleaned;
-  }
-  return cleaned;
-}
-
-const supabaseUrl = cleanUrl(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL
+/**
+ * Validate Browser/Client-Side Supabase Configuration.
+ * Browsers can ONLY access variables prefixed with NEXT_PUBLIC_.
+ */
+export const supabaseUrlValidation: SupabaseUrlValidationResult = validateSupabaseUrl(
+  process.env.NEXT_PUBLIC_SUPABASE_URL
 );
 
-const supabaseAnonKey = cleanEnv(
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_KEY
+export const supabaseAnonKeyValidation: SupabaseKeyValidationResult = validateSupabaseKey(
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY"
 );
 
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseAnonKey && 
-  !supabaseUrl.includes("your-project") &&
-  supabaseUrl.startsWith("https://")
+export const isSupabaseConfigured: boolean = Boolean(
+  supabaseUrlValidation.isValid && supabaseAnonKeyValidation.isValid
 );
 
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseConfigurationError: string | null = !isSupabaseConfigured
+  ? supabaseUrlValidation.errorMessage ||
+    supabaseAnonKeyValidation.errorMessage ||
+    "Supabase configuration is incomplete."
   : null;
+
+/**
+ * Initializes the client-side Supabase instance safely.
+ * Never calls createClient() if the URL is missing, invalid, or malformed.
+ * Never throws unhandled errors that break Next.js build or SSR.
+ */
+function initBrowserSupabase(): SupabaseClient | null {
+  if (!supabaseUrlValidation.isValid || !supabaseAnonKeyValidation.isValid) {
+    if (typeof window !== "undefined" && supabaseConfigurationError) {
+      console.warn(
+        `[StudyMate AI] Browser Supabase client disabled: ${supabaseConfigurationError}`
+      );
+    }
+    return null;
+  }
+
+  try {
+    return createClient(supabaseUrlValidation.url, supabaseAnonKeyValidation.key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[StudyMate AI] Safe browser Supabase initialization failed: ${errorMsg}`);
+    return null;
+  }
+}
+
+export const supabase: SupabaseClient | null = initBrowserSupabase();
+
+export function getSupabaseBrowserClient(): SupabaseClient | null {
+  return supabase;
+}
