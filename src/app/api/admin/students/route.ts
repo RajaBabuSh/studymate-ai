@@ -244,7 +244,18 @@ export async function GET(req: NextRequest) {
     );
     const combinedCourses = Array.from(new Set([...enrolledCourses, ...CATALOG_COURSES]));
 
-    console.log(`[AdminStudents] Serving ${allStudentsList.length} total students to admin directory`);
+    console.log(`[AdminStudents] Serving ${allStudentsList.length} total students to admin directory (databaseConnected: ${databaseConnected})`);
+
+    let dbErrorMessage: string | null = null;
+    if (!databaseConnected) {
+      if (!supabaseAdmin) {
+        dbErrorMessage =
+          "SUPABASE_SERVICE_ROLE_KEY is missing or invalid in Vercel Project Settings. The server requires this key to bypass Row-Level Security and query student records.";
+      } else {
+        dbErrorMessage =
+          "Unable to query the public.students table. Please ensure supabase/migrations/20261110_fix_student_sync.sql has been executed in your Supabase SQL Editor.";
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -252,6 +263,7 @@ export async function GET(req: NextRequest) {
       students: allStudentsList,
       courses: combinedCourses,
       databaseConnected,
+      databaseConfigError: dbErrorMessage,
     });
   } catch (err: unknown) {
     console.error("[AdminStudents] Unhandled error during student directory fetch:", err);

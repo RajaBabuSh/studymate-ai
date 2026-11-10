@@ -148,21 +148,27 @@ export function validateSupabaseUrl(rawUrl?: string | null): SupabaseUrlValidati
     };
   }
 
-  // 4. Detect Placeholders
+  // 4. Detect Placeholders and Label Text
+  const lowerCleaned = cleaned.toLowerCase();
   if (
-    cleaned.includes("your-project") ||
-    cleaned.includes("YOUR_PROJECT_REF") ||
-    cleaned.includes("your_project_ref") ||
-    cleaned.includes("<") ||
-    cleaned.includes(">") ||
-    cleaned.includes("[") ||
-    cleaned.includes("]")
+    lowerCleaned.includes("your-project") ||
+    lowerCleaned.includes("your_project_ref") ||
+    lowerCleaned.includes("your_project") ||
+    lowerCleaned.includes("project url") ||
+    lowerCleaned.includes("project_url") ||
+    lowerCleaned.includes("supabase url") ||
+    lowerCleaned.includes("supabase_url") ||
+    lowerCleaned.includes("<") ||
+    lowerCleaned.includes(">") ||
+    lowerCleaned.includes("[") ||
+    lowerCleaned.includes("]") ||
+    cleaned.includes(" ")
   ) {
     return {
       isValid: false,
       url: "",
       errorMessage:
-        "NEXT_PUBLIC_SUPABASE_URL contains placeholder text (e.g. YOUR_PROJECT_REF). Please replace it with your actual Supabase project reference: https://YOUR_PROJECT_REF.supabase.co",
+        `NEXT_PUBLIC_SUPABASE_URL contains placeholder text, label, or spaces ("${cleaned}"). Please replace it with your actual Supabase project URL from your Supabase Dashboard > Settings > API > Project URL (format: https://YOUR_PROJECT_REF.supabase.co).`,
       projectRef: null,
       errorType: "PLACEHOLDER_USED",
     };
